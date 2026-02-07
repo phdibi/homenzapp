@@ -1,0 +1,8 @@
+
+{
+  "name": "HomenzApp",
+  "description": "Plataforma de restauração capilar avançada para saúde e estética masculina.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

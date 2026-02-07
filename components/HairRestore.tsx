@@ -4,9 +4,10 @@ import { restoreHairAllAngles, restoreHairForAngle } from '../services/geminiSer
 import type { AngleSimulationResult, SimulationAngle } from '../types';
 
 const INITIAL_RESULTS: AngleSimulationResult[] = [
-  { angle: 'frontal', label: 'Vista Frontal',  image: null, status: 'pending' },
-  { angle: 'lateral', label: 'Vista Lateral',  image: null, status: 'pending' },
-  { angle: 'top',     label: 'Vista Superior', image: null, status: 'pending' },
+  { angle: 'frontal',       label: 'Vista Frontal',         image: null, status: 'pending' },
+  { angle: 'lateral_left',  label: 'Lateral Esquerdo',      image: null, status: 'pending' },
+  { angle: 'lateral_right', label: 'Lateral Direito',       image: null, status: 'pending' },
+  { angle: 'top',           label: 'Vista Superior',        image: null, status: 'pending' },
 ];
 
 const HairRestore: React.FC = () => {
@@ -91,7 +92,7 @@ const HairRestore: React.FC = () => {
           SIMULAÇÃO DE <span className="text-[#57BEB7]">TRANSPLANTE</span>
         </h1>
         <p className="text-gray-500 font-medium leading-relaxed">
-          Nossa IA utiliza os múltiplos ângulos enviados para reconstruir seu visual com fidelidade total à sua face. Envie até 6 fotos e receba 3 simulações em ângulos diferentes.
+          Nossa IA utiliza os múltiplos ângulos enviados para reconstruir seu visual com fidelidade total à sua face. Envie até 6 fotos e receba 4 simulações em ângulos diferentes.
         </p>
       </div>
 
@@ -136,14 +137,14 @@ const HairRestore: React.FC = () => {
           )}
         </div>
 
-        {/* Results Gallery - 3 Angles */}
+        {/* Results Gallery - 4 Angles */}
         {isStarted && (
           <div className="w-full max-w-5xl mt-12 space-y-8 animate-slide-up">
             <h2 className="text-center text-2xl font-black text-[#1D4998] uppercase tracking-wider">
               Resultados da Simulação
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {simulationResults.map((result) => (
                 <div key={result.angle} className="flex flex-col space-y-3">
                   {/* Card */}

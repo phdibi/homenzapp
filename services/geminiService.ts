@@ -43,25 +43,30 @@ const compressImage = (base64DataUrl: string, maxSize = 1024, quality = 0.8): Pr
 };
 
 const BASE_FUE_PROMPT = `
-You are a photorealistic image editor specializing in hair transplant simulations.
+You are a photorealistic image editor. You simulate FUE hair transplant results.
 
-INPUT: Multiple photos of the SAME person from different angles showing hair loss (receding hairline, temple recession, thinning).
+INPUT: Multiple photos of the SAME person showing hair loss.
 
-YOUR TASK: Edit the photo to show this person with a FULL HEAD OF HAIR — as if they received a 3500-graft FUE transplant 12 months ago. The result must be a DRAMATIC transformation.
+YOUR TASK: Edit the photo to show this person 12 months after a 3500-graft FUE transplant. The transformation must be DRAMATIC and visible.
 
-=== THE 3 CHANGES YOU MUST MAKE ===
+=== HAIR TRANSPLANT ZONE MAP ===
 
-1. SHRINK THE FOREHEAD — ADD SHORT HAIR ON THE BALD FOREHEAD SKIN:
-The patient's forehead is tall because hair has receded. On the upper part of the forehead where there is currently only bare skin, add short hair growth (same length as the patient's existing hair) so the forehead appears 30-40% shorter. The new hairline has a natural wavy irregular border. IMPORTANT: the new hair must be the same length as the existing hair — do NOT make hair longer or change the hairstyle.
+A surgeon would draw these zones on the patient's head before surgery. You must fill each zone with hair:
 
-2. FILL THE TEMPLE TRIANGLES ("ENTRADAS"):
-The bald V-shaped areas at both temples must be completely covered with hair. Zero bare skin remaining at the temples. The hair at the temples angles downward toward the face.
+ZONE A — NEW HAIRLINE (the soft front edge):
+Position the new hairline about 7-8cm above the eyebrows (roughly 4 finger-widths). The face should follow the rule of thirds: forehead = 1/3, mid-face = 1/3, lower face = 1/3. Currently the forehead is too tall — hair must grow lower to restore this proportion. The hairline border is slightly irregular/wavy (zigzag, NOT straight). At the very front edge: sparse thin individual hairs creating a soft see-through border. Just behind (1-2cm): progressively denser hair.
 
-3. FILL ALL THIN/SPARSE AREAS:
-Wherever scalp skin is visible through thin hair, add enough hair density so the scalp is completely hidden. More hair strands growing from the roots — same length as existing hair.
+ZONE B — TEMPLE POINTS (the side corners):
+Sharp angular corners of hair on each side where the hairline meets the temple. Hair here grows DOWNWARD and slightly backward at very flat angles against the skin. The temples must transition smoothly into the sideburns — no gaps, no bald patches on the sides of the head.
 
-=== PRESERVE THESE (do not alter) ===
-- Face, skin, beard, expression, eyes, nose, ears — identical to input
+ZONE C — FRONTAL DENSITY (the main mass behind the hairline):
+Dense thick hair behind the new hairline. This is where the visual "fullness" comes from. No scalp visible. Same hair length as patient's existing hair.
+
+ZONE D — MID-SCALP & CROWN:
+Fill any thin areas where scalp shows through. Natural whorl pattern at crown. Hair flows front-to-back.
+
+=== PRESERVE (do not alter) ===
+- Face, skin, beard, expression — identical to input
 - Hair length and hairstyle — same cut, just more density and coverage
 - Background, lighting, clothing, photo quality
 `;
@@ -72,10 +77,10 @@ OUTPUT: One FRONTAL photo (face looking at camera, same pose as input).
 
 The patient's hairstyle and hair length must stay EXACTLY as they are now. Only the COVERAGE AREA changes — hair now grows where before there was bald skin.
 
-KEY CHANGES:
-1. FOREHEAD SHORTER: Short hair (same length as existing) now grows on the upper 30-40% of the currently bare forehead. The forehead appears much smaller.
-2. TEMPLES FILLED: Both bald temple triangles covered with hair — zero bare skin.
-3. DENSITY: No scalp visible through thin areas.
+KEY CHANGES — apply the zone map to this frontal view:
+1. ZONE A: New hairline ~7-8cm above eyebrows. The face must follow the rule of thirds — forehead = 1/3 of face height. Currently the forehead is too tall. Soft irregular border with sparse single hairs at the very edge, denser 1-2cm behind.
+2. ZONE B: Both bald temple triangles COMPLETELY filled with hair. Sharp temple points framing the face — zero bare skin on the sides.
+3. ZONE C: Dense hair behind the new hairline. No scalp visible anywhere.
 
 Face identical to input. Same hair length — only more coverage.
 `,
@@ -85,10 +90,10 @@ OUTPUT: One LEFT SIDE PROFILE photo.
 
 CAMERA: Shows LEFT cheek, LEFT ear, LEFT jawline. Nose points RIGHT. LEFT EAR visible, RIGHT ear NOT visible.
 
-KEY CHANGES:
-1. TEMPLE AREA: Look at the side of the head between the forehead and the ear — there is a bald/shaved-looking area where hair is missing or very thin. Fill this ENTIRE area with thick hair so the hair flows continuously from the top of the head down past the temple to the ear. No bald patches on the side of the head.
-2. HAIRLINE: The point where hair starts on the forehead must be LOWER/further forward than in the input.
-3. DENSITY: Thick, full hair everywhere — no scalp peeking through.
+KEY CHANGES — apply the zone map to this side view:
+1. ZONE B (most visible change from this angle): The bald area on the side of the head between the forehead and the ear must be COMPLETELY filled. Hair flows continuously from the top of the head down past the temple to the ear — zero bald patches on the side. Temple hair grows DOWNWARD at flat angles against the skin, transitioning smoothly into the sideburn.
+2. ZONE A: Hairline starts LOWER/further forward on the forehead than in the input. Soft irregular edge.
+3. ZONE C: Thick full hair everywhere behind the hairline — no scalp peeking through.
 
 Same hair length and style. Face identical to input.
 `,
@@ -98,10 +103,10 @@ OUTPUT: One RIGHT SIDE PROFILE photo.
 
 CAMERA: Shows RIGHT cheek, RIGHT ear, RIGHT jawline. Nose points LEFT. RIGHT EAR visible, LEFT ear NOT visible.
 
-KEY CHANGES:
-1. TEMPLE AREA: Look at the side of the head between the forehead and the ear — there is a bald/shaved-looking area where hair is missing or very thin. Fill this ENTIRE area with thick hair so the hair flows continuously from the top of the head down past the temple to the ear. No bald patches on the side of the head.
-2. HAIRLINE: The point where hair starts on the forehead must be LOWER/further forward than in the input.
-3. DENSITY: Thick, full hair everywhere — no scalp peeking through.
+KEY CHANGES — apply the zone map to this side view:
+1. ZONE B (most visible change from this angle): The bald area on the side of the head between the forehead and the ear must be COMPLETELY filled. Hair flows continuously from the top of the head down past the temple to the ear — zero bald patches on the side. Temple hair grows DOWNWARD at flat angles against the skin, transitioning smoothly into the sideburn.
+2. ZONE A: Hairline starts LOWER/further forward on the forehead than in the input. Soft irregular edge.
+3. ZONE C: Thick full hair everywhere behind the hairline — no scalp peeking through.
 
 Same hair length and style. Face identical to input.
 `,
@@ -109,12 +114,12 @@ Same hair length and style. Face identical to input.
   top: `
 OUTPUT: One TOP-DOWN photo (looking down at the top of the head).
 
-KEY CHANGES for this angle:
-1. Every spot where scalp skin shows through thin hair must be filled with dense hair. Looking down at the head, you should see ONLY hair — zero scalp skin visible anywhere. Add more hair strands at the roots (same length, more density).
-2. The front edge of the hair starts FURTHER FORWARD on the head — hair covers more of the forehead area.
+KEY CHANGES — apply the zone map to this top view:
+1. ZONE A: Hair starts FURTHER FORWARD on the head (lower hairline visible from above). Soft irregular border at the front edge.
+2. ZONE C + D: Complete scalp coverage. Zero skin visible anywhere. Dense carpet of hair filling every thin spot.
 3. Natural hair direction: flows forward in front, front-to-back on mid-scalp, whorl pattern at crown.
 
-Keep the same hair length. The change is DENSITY, not length.
+Same hair length — the change is DENSITY and COVERAGE, not length.
 `,
 };
 

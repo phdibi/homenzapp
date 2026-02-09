@@ -51,8 +51,8 @@ YOUR TASK: Edit the photo to show this person with a FULL HEAD OF HAIR — as if
 
 === THE 3 CHANGES YOU MUST MAKE ===
 
-1. FILL THE FOREHEAD WITH HAIR — MAKE THE FOREHEAD MUCH SMALLER:
-The patient's forehead looks tall/large because hair has receded. You must draw/paint hair growing on the upper forehead skin so the forehead becomes visibly SHORTER. The hairline must start much lower — roughly 30-40% less forehead visible. The new hairline has a natural wavy shape (not straight). Keep the same hair length and style — just add coverage on the bald forehead area.
+1. SHRINK THE FOREHEAD — ADD SHORT HAIR ON THE BALD FOREHEAD SKIN:
+The patient's forehead is tall because hair has receded. On the upper part of the forehead where there is currently only bare skin, add short hair growth (same length as the patient's existing hair) so the forehead appears 30-40% shorter. The new hairline has a natural wavy irregular border. IMPORTANT: the new hair must be the same length as the existing hair — do NOT make hair longer or change the hairstyle.
 
 2. FILL THE TEMPLE TRIANGLES ("ENTRADAS"):
 The bald V-shaped areas at both temples must be completely covered with hair. Zero bare skin remaining at the temples. The hair at the temples angles downward toward the face.
@@ -70,12 +70,14 @@ const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
 OUTPUT: One FRONTAL photo (face looking at camera, same pose as input).
 
-KEY CHANGES for this angle:
-1. The forehead must be MUCH SHORTER — draw hair growing on the upper 30-40% of the currently bare forehead skin. This is the most important change. The hairline starts much lower, with a natural wavy border.
-2. Both temple triangles ("entradas") completely filled with hair — zero bare skin at the temples.
-3. All thin areas filled — no scalp visible through the hair.
+The patient's hairstyle and hair length must stay EXACTLY as they are now. Only the COVERAGE AREA changes — hair now grows where before there was bald skin.
 
-The face must remain identical. The hair length and style must remain the same — only add density and lower the hairline.
+KEY CHANGES:
+1. FOREHEAD SHORTER: Short hair (same length as existing) now grows on the upper 30-40% of the currently bare forehead. The forehead appears much smaller.
+2. TEMPLES FILLED: Both bald temple triangles covered with hair — zero bare skin.
+3. DENSITY: No scalp visible through thin areas.
+
+Face identical to input. Same hair length — only more coverage.
 `,
 
   lateral_left: `
@@ -83,12 +85,12 @@ OUTPUT: One LEFT SIDE PROFILE photo.
 
 CAMERA: Shows LEFT cheek, LEFT ear, LEFT jawline. Nose points RIGHT. LEFT EAR visible, RIGHT ear NOT visible.
 
-KEY CHANGES for this angle:
-1. The bald/thin area at the LEFT TEMPLE (the concave gap between hairline and ear) must be completely filled with hair. The head silhouette from forehead to ear becomes a smooth continuous curve of hair — no bald dip.
-2. The hairline starts LOWER on the forehead — less forehead visible from this side than in the input.
-3. Hair has full density everywhere — no scalp visible.
+KEY CHANGES:
+1. TEMPLE AREA: Look at the side of the head between the forehead and the ear — there is a bald/shaved-looking area where hair is missing or very thin. Fill this ENTIRE area with thick hair so the hair flows continuously from the top of the head down past the temple to the ear. No bald patches on the side of the head.
+2. HAIRLINE: The point where hair starts on the forehead must be LOWER/further forward than in the input.
+3. DENSITY: Thick, full hair everywhere — no scalp peeking through.
 
-Keep the same hair length and style. Face identical to input.
+Same hair length and style. Face identical to input.
 `,
 
   lateral_right: `
@@ -96,12 +98,12 @@ OUTPUT: One RIGHT SIDE PROFILE photo.
 
 CAMERA: Shows RIGHT cheek, RIGHT ear, RIGHT jawline. Nose points LEFT. RIGHT EAR visible, LEFT ear NOT visible.
 
-KEY CHANGES for this angle:
-1. The bald/thin area at the RIGHT TEMPLE (the concave gap between hairline and ear) must be completely filled with hair. The head silhouette from forehead to ear becomes a smooth continuous curve of hair — no bald dip.
-2. The hairline starts LOWER on the forehead — less forehead visible from this side than in the input.
-3. Hair has full density everywhere — no scalp visible.
+KEY CHANGES:
+1. TEMPLE AREA: Look at the side of the head between the forehead and the ear — there is a bald/shaved-looking area where hair is missing or very thin. Fill this ENTIRE area with thick hair so the hair flows continuously from the top of the head down past the temple to the ear. No bald patches on the side of the head.
+2. HAIRLINE: The point where hair starts on the forehead must be LOWER/further forward than in the input.
+3. DENSITY: Thick, full hair everywhere — no scalp peeking through.
 
-Keep the same hair length and style. Face identical to input.
+Same hair length and style. Face identical to input.
 `,
 
   top: `

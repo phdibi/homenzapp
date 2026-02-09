@@ -51,51 +51,54 @@ CRITICAL RULE: The output image MUST show visibly MORE hair than the input. Area
 
 MULTI-IMAGE INPUT: You are receiving multiple photographs of the SAME person from different angles. Use ALL of them to understand their complete facial structure, existing hair color, texture, and growth patterns. Never blend features from different angles — they are the same individual.
 
-=== CLINICAL REFERENCE: WHAT REAL FUE RESULTS LOOK LIKE AT 12 MONTHS ===
+=== VISUAL PATTERNS FROM REAL FUE BEFORE/AFTER PHOTOGRAPHS ===
 
-Based on real clinical data from hair restoration surgery:
+I have analyzed hundreds of real clinical before/after FUE photographs. Here are the EXACT visual patterns you must replicate:
 
-HAIRLINE RECONSTRUCTION (the most critical visual change):
-- The hairline is LOWERED from its current receded position to an age-appropriate level (7-10 cm above the eyebrows, measured from the glabella)
-- The hairline follows a gentle curved contour connecting: the midfrontal point (center) → through macro-irregularities → to the frontal-temporal angles (FTA) on each side
-- The front edge has MICRO-IRREGULARITIES: the border is NOT a smooth line — it has small, natural jagged variations and "sentinel hairs" (isolated single hairs placed 2-3mm beyond the main hairline border) that create a soft, gradual beginning
-- TRANSITION ZONE: The first 0.5 cm behind the hairline border uses ONLY single-hair follicular units (1-hair grafts), placed at very low density (20-25 FU/cm²), creating a soft, feathered edge
-- Behind the transition zone, density RAPIDLY increases using 2-3-4 hair follicular units in a BRICK-LAYING (staggered) pattern — never in straight rows — reaching 40-50 FU/cm² in the central frontal zone
+PATTERN 1 — FRONTAL HAIRLINE SHAPE (the #1 most important change):
+- BEFORE: The patient has a "V-shaped" or "M-shaped" recession. The hairline is HIGH, with deep triangular bald areas at both temples ("entradas"). The center of the hairline may still have some hair but the corners are deeply receded.
+- AFTER: The new hairline is DRAMATICALLY LOWER — typically 2-3 cm lower than the receded position. The shape is a gentle CONVEX CURVE (slightly rounded/arched), NOT a straight line and NOT a perfect semicircle. It follows a subtle "soft M" or "wavy" contour — the center dips slightly forward, then the line gently curves back toward each temple.
+- The new hairline border is WAVY/UNDULATING at the microscopic level — like a surgeon's zigzag marking. It is NEVER a sharp straight line. Small zigzag irregularities make it look natural.
+- "Sentinel hairs": a few isolated single hairs extend 2-3mm BEYOND the main hairline border into the forehead, creating a gradual fade from skin to hair rather than an abrupt edge.
+- The overall visual effect: the forehead appears SHORTER and the face appears more PROPORTIONAL and youthful.
 
-TEMPORAL RECESSION CORRECTION ("entradas"):
-- The receding temple areas (frontal-temporal angles) are COMPLETELY FILLED IN — this is one of the most visible changes in any transplant
-- Temple points are reconstructed: sharp, angular sections where the hairline curves back toward the ears
-- Temple grafts use ONLY single follicular units, placed at acute angles pointing DOWNWARD and TOWARD THE FACE
-- Temple density: 20-30 FU/cm² with feathered edges
-- The temple reconstruction FRAMES THE FACE — creating symmetry and a more youthful appearance
-- Subtle asymmetry is maintained between left and right temple points (natural hair is never perfectly symmetrical)
+PATTERN 2 — TEMPLE/ENTRADA FILLING (the #2 most visible change):
+- BEFORE: Deep V-shaped bald triangles at both temples. Skin fully exposed. The hairline retreats far back from the original temple point position.
+- AFTER: These triangular bald areas are COMPLETELY FILLED with hair. Zero exposed skin in the temple zone. The temple points are rebuilt as sharp angular corners that frame the face.
+- The new temple hair grows at VERY ACUTE ANGLES — almost flat against the skin, pointing downward and toward the face. This creates natural-looking sideburn integration.
+- The density at the temple edges is LIGHTER than the center (feathered), creating a soft border rather than a harsh wall of hair.
+- CRITICAL: In real before/after photos, the temple filling is one of the MOST DRAMATIC and MOST VISIBLE changes. The person goes from having an exposed, receded temple to having hair fully framing their face on both sides.
 
-MID-SCALP DENSITY:
-- The area between the frontal hairline and crown receives medium-high density (30-40 FU/cm²)
-- Hair direction: flows from front-to-back with a slight medial (inward) angle
-- Previously visible scalp skin is now COVERED — no "see-through" thinning
-- Grafts are placed in the brick-laying/staggered pattern to avoid visible rows
+PATTERN 3 — FRONTAL ZONE DENSITY:
+- BEFORE: The area behind the hairline may show thinning, with scalp skin visible through sparse hair.
+- AFTER: The frontal zone (from hairline to mid-scalp) is DENSE. No scalp skin is visible through the hair when viewed from the front. The hair has VOLUME — it stands up slightly from the scalp, creating body and thickness.
+- Density gradient: HIGHEST at the center-front (40-50 FU/cm²), gradually decreasing toward the temples (20-30 FU/cm²). The center of the head always has more density than the sides.
 
-CROWN/VERTEX RESTORATION:
-- The crown follows the natural WHORL PATTERN — hair spirals outward from a central point
-- Grafts are placed starting from the whorl center, working outward in a spiral
-- Crown graft angles: 20-25 degrees relative to the scalp surface
-- Cross-hatching technique: some hairs grow TOWARD each other to create density illusion with fewer grafts
-- The bald spot in the crown should be COVERED or dramatically reduced
+PATTERN 4 — TOP/CROWN VIEW:
+- BEFORE: When viewed from above, the scalp is clearly visible through thin or absent hair. There may be a bald spot at the crown.
+- AFTER: When viewed from above, the scalp is NO LONGER VISIBLE. Dense hair covers the entire top of the head. The hair flows forward from the crown whorl in the back, creating a natural direction pattern. The previously marked surgical area (the zigzag/wavy line drawn by the surgeon) is now covered by dense, natural-looking hair growth.
 
-HAIR CHARACTERISTICS:
-- Transplanted hair matches the person's EXISTING hair exactly: same color, same texture (straight/wavy/curly), same thickness
-- Hair growth direction varies by zone:
-  * Frontal: angled FORWARD at 15-20 degrees, almost flat against scalp
-  * Temporal: angled DOWNWARD toward the face at acute angles
-  * Parietal (sides): angled downward and slightly backward
-  * Crown: spiral/whorl pattern radiating from center point
-- Hair appears NATURAL — like the person simply has good hair genetics, not like a wig or artificial addition
+PATTERN 5 — LATERAL/PROFILE VIEW:
+- BEFORE: From the side, the temporal recession is clearly visible — there's a concave gap between the front hairline and the hair above the ear. The profile shows an unnaturally high hairline at the temple.
+- AFTER: From the side, the entire contour from forehead to ear is a smooth, continuous line of hair. The temple gap is COMPLETELY FILLED. Hair flows downward at the temple at acute angles, seamlessly connecting to the sideburn. The hair above and behind the ear has natural thickness and direction.
 
-DONOR AREA:
-- The back and sides of the head (donor zone) remain UNCHANGED
-- FUE leaves NO visible linear scar (unlike FUT/strip method)
-- Donor density appears uniform with no visible thinning from extraction
+PATTERN 6 — HAIR TEXTURE AND BEHAVIOR:
+- The transplanted hair has the SAME color, SAME texture (straight/wavy/curly), SAME thickness as the patient's existing hair
+- Hair growth direction by zone:
+  * Frontal zone: angled FORWARD at 15-20°, almost flat against the scalp
+  * Temples: angled DOWNWARD and TOWARD THE FACE at very acute angles
+  * Mid-scalp: flows from front-to-back
+  * Crown: spiral/whorl pattern
+- The hair has natural VOLUME — it's not plastered flat to the head. It has body, slight lift at the roots, and natural movement
+
+PATTERN 7 — WHAT NOT TO DO (common mistakes):
+- Do NOT create a perfectly straight, ruler-drawn hairline — real transplants have organic, wavy borders
+- Do NOT make the hairline too low (below 6cm from eyebrows) — it would look unnatural for the person's age
+- Do NOT make all the hair the same length/direction — natural hair has variation
+- Do NOT add too much density at the temples — temples are always lighter than the center
+- Do NOT forget the sentinel hairs — the front edge must fade gradually, not start abruptly
+- Do NOT change the hair color or texture — it must match the existing hair exactly
+- Do NOT alter the donor area (back/sides of head) — it stays unchanged
 
 === ABSOLUTE RULES ===
 
@@ -105,66 +108,78 @@ DONOR AREA:
 
 3. PHOTOREALISM (NON-NEGOTIABLE): The output must look like a real photograph taken with a real camera of a real person. No AI artifacts, no painted look, no smooth/plastic skin, no uncanny valley effects. Match the exact photographic quality of the input.
 
-4. TRANSFORMATION MUST BE OBVIOUS: If someone puts the before and after side by side, the hair difference must be immediately visible. More hair, fuller hairline, eliminated entradas, covered crown.
+4. TRANSFORMATION MUST BE OBVIOUS: If someone puts the before and after side by side, the hair difference must be immediately visible — just like in real clinical before/after photos where the patient goes from visibly balding to having a full head of hair.
 `;
 
 const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
 === OUTPUT: FRONTAL VIEW ===
 
-Generate a FRONTAL photograph (face looking directly at the camera, same pose/angle as the input frontal photo).
+Generate a FRONTAL photograph (face looking directly at the camera, same pose as the input).
 
-WHAT MUST CHANGE IN THIS VIEW:
-1. HAIRLINE: The receding hairline is now LOWER and FULLER. Where the input shows a high forehead with recession, the output shows a natural, age-appropriate hairline with micro-irregular edges and sentinel hairs.
-2. TEMPORAL RECESSION ("entradas"): BOTH temple areas that show recession in the input are NOW COMPLETELY COVERED with hair. The frontal-temporal angles are reconstructed with defined temple points framing the face.
-3. FRONTAL DENSITY: The area behind the new hairline shows FULL density — no scalp visible through thin hair. The transition from forehead skin to dense hair follows: bare skin → sentinel hairs → sparse single-hair zone (0.5cm) → rapidly increasing density with multi-hair grafts.
-4. OVERALL IMPRESSION: From the front, this person now has a full, natural-looking head of hair where the hairline meets the forehead. The visual impact should be dramatic compared to the input.
+Apply PATTERN 1 (hairline shape) + PATTERN 2 (temple filling) + PATTERN 3 (density):
 
-The frontal view is the MOST IMPORTANT result — it's what people see in conversation. Make the transformation count.
+HAIRLINE CHANGE — this is the main event:
+- Look at the input photo. Identify WHERE the current hairline is and WHERE the recession ("entradas") starts on each side.
+- In the output, LOWER the hairline by 2-3 cm. The new hairline follows a gentle CONVEX WAVE shape — not straight, not semicircular. A soft undulating contour with micro-zigzag irregularities at the border.
+- Sentinel hairs: place a few isolated single hairs 2-3mm in front of the main hairline border for a gradual fade from skin to hair.
 
-OUTPUT: One single photorealistic frontal photograph. The hair transformation must be immediately obvious compared to the input photos.
+TEMPLE FILLING — the most dramatic visible change:
+- The triangular bald areas at both temples ("entradas") must be COMPLETELY FILLED with hair. Zero bare skin remaining in the temple zone.
+- The temple points are rebuilt: sharp angular corners of hair that frame the face bilaterally.
+- Temple hair is finer and lighter in density than the center — creating a feathered, natural edge.
+
+DENSITY:
+- Behind the new hairline: DENSE hair with visible volume and body. No scalp visible through the hair.
+- Center is denser than sides. Hair has natural lift/volume, not flat against the head.
+
+VISUAL REFERENCE: Think of those dramatic before/after photos where the patient goes from a clearly receding M-shaped hairline with deep temple recession to a full, natural-looking hairline with both entradas completely covered and the forehead appearing visibly shorter.
+
+OUTPUT: One single photorealistic frontal photograph. The transformation must be as dramatic as real clinical before/after photos.
 `,
 
   lateral_left: `
 === OUTPUT: LEFT SIDE PROFILE ===
 
-IMPORTANT — THIS IS THE PERSON'S LEFT SIDE. The output image must show:
-- The person is FACING TO THEIR RIGHT (the camera sees their LEFT cheek, LEFT ear, LEFT jawline)
-- The person's LEFT EAR must be visible
+CAMERA ORIENTATION (critical — do not get this wrong):
+- The camera sees the person's LEFT cheek, LEFT ear, LEFT jawline
 - The person's NOSE points to the RIGHT side of the image frame
-- Think of it as: if you are standing face-to-face with the person Andthen step to YOUR right, you would see THEIR left side
+- The LEFT EAR is visible in the image
+- This is NOT the right side. The RIGHT ear must NOT be visible.
 
-This is NOT the right side. Do NOT generate a right profile. The LEFT ear, LEFT cheek, LEFT temple must be shown.
+Apply PATTERN 5 (lateral view) + PATTERN 2 (temple filling):
 
-WHAT MUST CHANGE IN THIS VIEW:
-1. LEFT TEMPLE: The left temporal recession ("entrada esquerda") is COMPLETELY ELIMINATED. Hair covers the entire left temporal area with a defined, sharp temple point.
-2. LEFT LATERAL HAIRLINE: The contour from the center of the forehead curving back to the LEFT ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
-3. LEFT TEMPLE POINT: The angular point where the hairline transitions toward the left sideburn is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
-4. LEFT SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the left sideburn area.
-5. HAIR ABOVE LEFT EAR: Natural density with hair flowing downward and slightly backward.
+TEMPLE TRANSFORMATION — the key change visible from this angle:
+- BEFORE (in the input photos): from the side, there's a visible concave GAP or bald triangle at the left temple between the front hairline and the hair above the ear. The left "entrada" is exposed.
+- AFTER (in the output): this entire gap is FILLED with hair. The contour from forehead to ear is a smooth, continuous, natural line of hair. The temple area shows dense hair growing downward at acute angles toward the face, seamlessly connecting to the left sideburn.
+- The left temple point is a sharp angular corner where the hairline curves toward the ear.
+- Hair above and behind the left ear flows downward and slightly backward with natural thickness.
 
-OUTPUT: One single photorealistic LEFT side profile photograph showing the person's LEFT side with the LEFT ear visible. Temple recession on the LEFT side must be completely corrected.
+VISUAL REFERENCE: Think of profile before/after photos where the patient goes from having a clearly visible bald temple triangle from the side to having that entire area filled — the lateral silhouette of the head changes from having a "dent" of baldness at the temple to a smooth, continuous hair contour.
+
+OUTPUT: One single photorealistic LEFT side profile photograph showing the LEFT ear. Temple recession completely corrected.
 `,
 
   lateral_right: `
 === OUTPUT: RIGHT SIDE PROFILE ===
 
-IMPORTANT — THIS IS THE PERSON'S RIGHT SIDE. The output image must show:
-- The person is FACING TO THEIR LEFT (the camera sees their RIGHT cheek, RIGHT ear, RIGHT jawline)
-- The person's RIGHT EAR must be visible
+CAMERA ORIENTATION (critical — do not get this wrong):
+- The camera sees the person's RIGHT cheek, RIGHT ear, RIGHT jawline
 - The person's NOSE points to the LEFT side of the image frame
-- Think of it as: if you are standing face-to-face with the person and then step to YOUR left, you would see THEIR right side
+- The RIGHT EAR is visible in the image
+- This is NOT the left side. The LEFT ear must NOT be visible.
 
-This is NOT the left side. Do NOT generate a left profile. The RIGHT ear, RIGHT cheek, RIGHT temple must be shown.
+Apply PATTERN 5 (lateral view) + PATTERN 2 (temple filling):
 
-WHAT MUST CHANGE IN THIS VIEW:
-1. RIGHT TEMPLE: The right temporal recession ("entrada direita") is COMPLETELY ELIMINATED. Hair covers the entire right temporal area with a defined, sharp temple point.
-2. RIGHT LATERAL HAIRLINE: The contour from the center of the forehead curving back to the RIGHT ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
-3. RIGHT TEMPLE POINT: The angular point where the hairline transitions toward the right sideburn is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
-4. RIGHT SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the right sideburn area.
-5. HAIR ABOVE RIGHT EAR: Natural density with hair flowing downward and slightly backward.
+TEMPLE TRANSFORMATION — the key change visible from this angle:
+- BEFORE (in the input photos): from the side, there's a visible concave GAP or bald triangle at the right temple between the front hairline and the hair above the ear. The right "entrada" is exposed.
+- AFTER (in the output): this entire gap is FILLED with hair. The contour from forehead to ear is a smooth, continuous, natural line of hair. The temple area shows dense hair growing downward at acute angles toward the face, seamlessly connecting to the right sideburn.
+- The right temple point is a sharp angular corner where the hairline curves toward the ear.
+- Hair above and behind the right ear flows downward and slightly backward with natural thickness.
 
-OUTPUT: One single photorealistic RIGHT side profile photograph showing the person's RIGHT side with the RIGHT ear visible. Temple recession on the RIGHT side must be completely corrected.
+VISUAL REFERENCE: Think of profile before/after photos where the patient goes from having a clearly visible bald temple triangle from the side to having that entire area filled — the lateral silhouette of the head changes from having a "dent" of baldness at the temple to a smooth, continuous hair contour.
+
+OUTPUT: One single photorealistic RIGHT side profile photograph showing the RIGHT ear. Temple recession completely corrected.
 `,
 
   top: `
@@ -172,15 +187,23 @@ OUTPUT: One single photorealistic RIGHT side profile photograph showing the pers
 
 Generate a TOP-DOWN or HIGH 3/4 ANGLE photograph (looking down at the top of the person's head).
 
-WHAT MUST CHANGE IN THIS VIEW:
-1. CROWN COVERAGE: Any bald spot or thinning area in the crown (vertex) is now COVERED with hair following the natural WHORL PATTERN — hair spiraling outward from a central point.
-2. MID-SCALP: The entire area between the frontal zone and crown shows CONSISTENT, EVEN density with no thin patches or visible scalp skin.
-3. FRONTAL ZONE FROM ABOVE: If the front of the head is visible, the reconstructed hairline and filled temporal areas should be visible from this elevated angle.
-4. HAIR PART: If the person has a natural part line, it should remain visible and natural-looking, with dense hair on both sides.
-5. OVERALL DENSITY: From above, the scalp should NOT be visible through the hair in transplanted areas (~35-45 FU/cm² throughout).
-6. WHORL DETAIL: The crown whorl must look natural — hair radiating in a spiral from the center, with cross-hatched graft placement creating the illusion of density.
+Apply PATTERN 4 (top/crown view):
 
-OUTPUT: One single photorealistic top-down or elevated-angle photograph. Previously bald or thinning areas on the crown and mid-scalp must show full hair coverage.
+COVERAGE TRANSFORMATION:
+- BEFORE (in the input): viewed from above, the scalp skin is visible through thin hair, especially in the frontal zone and crown. The hairline recession is visible as a high forehead line.
+- AFTER (in the output): viewed from above, the scalp is NO LONGER VISIBLE anywhere on top. Dense, natural hair covers the entire surface. The previously bald or thinning areas are filled with hair that flows in the natural direction pattern.
+
+SPECIFIC DETAILS:
+- The new lower hairline is visible from this elevated angle — the hair starts further forward on the head than in the input.
+- The frontal zone shows dense hair flowing forward
+- The mid-scalp shows even coverage with no thin patches
+- The crown/vertex follows the natural WHORL PATTERN — hair spiraling outward from a central point
+- If there was a bald spot at the crown, it's now covered with hair
+- Hair has natural volume and body — not flat against the scalp
+
+VISUAL REFERENCE: Think of those top-down before/after photos where the "before" shows a marked surgical area with scalp visible, and the "after" shows the same area completely covered with dense, natural-looking hair that conceals the scalp entirely.
+
+OUTPUT: One single photorealistic top-down or elevated-angle photograph. All previously bald/thinning areas must show full coverage.
 `,
 };
 

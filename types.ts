@@ -4,6 +4,8 @@ export type ImageSize = "1K" | "2K" | "4K";
 
 export type SimulationAngle = 'frontal' | 'lateral_left' | 'lateral_right' | 'top';
 
+export type AngleImageMap = Record<SimulationAngle, string | null>;
+
 export interface AngleSimulationResult {
   angle: SimulationAngle;
   label: string;

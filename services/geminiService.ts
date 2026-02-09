@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import type { SimulationAngle } from "../types";
 
@@ -54,35 +53,37 @@ const selectImageForAngle = async (
 };
 
 /**
- * Prompts curtos e diretos — 1 por ângulo.
- * Sem jargão médico, sem negative prompts, linguagem 100% positiva e visual.
+ * Prompts otimizados para resultados fotorrealistas de alta densidade.
+ * Instruções explícitas sobre linha frontal, têmporas e densidade.
  */
 const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Edit this photo to show hair transplant results.
+  frontal: `Edit this photo to create a realistic, high-density hair transplant result.
 
-Add thick hair to cover the forehead — the hairline must come down significantly so the forehead is only 1/3 of the face height. Fill both temple corners completely with hair. No bald patches anywhere at the temples or forehead.
+1. Hairline & Forehead: Lower the hairline significantly (approx. 2-3cm) to reduce forehead height. Create a youthful, defined hairline (straight or slightly curved). If there are surgical markings on the forehead, use the lowest line as the new hairline and fill above it; remove the markings.
+2. Temples: Completely fill the receding temple corners (temporal triangles). Eliminate any 'M' shape.
+3. Density: Add thick, dense hair to all thinning areas. No scalp should be visible in the treated zones. match the density of the thickest existing hair.
+4. Natural Look: Match the existing hair texture, color, and flow perfectly. Keep the face, skin, and background unchanged.`,
 
-Cover all thin/sparse areas with dense hair. No scalp visible through the hair.
+  lateral_left: `Edit this photo to create a realistic, high-density hair transplant result from the left side.
 
-Keep the same face, expression, skin, ears, beard, background, hair color, and hair length. Only add new hair where skin is currently bare or thin.`,
+1. Temple & Sideburn: Completely fill the temporal recession. Connect the new hairline to the sideburn with a sharp, dense angle (temporal point).
+2. Hairline: Extend the hairline forward to reduce forehead prominence.
+3. Density: Ensure high hair density in the filled areas. No scalp visible.
+4. Consistency: Match existing hair characteristics. Keep facial features and background unchanged.`,
 
-  lateral_left: `Edit this photo to show hair transplant results from the left side.
+  lateral_right: `Edit this photo to create a realistic, high-density hair transplant result from the right side.
 
-Fill the temple area completely — the gap between the top of the head and the ear must be covered with dense hair flowing down to the sideburn. No bare skin visible at the temple. Lower the hairline so it starts further forward on the forehead.
+1. Temple & Sideburn: Completely fill the temporal recession. Connect the new hairline to the sideburn with a sharp, dense angle (temporal point).
+2. Hairline: Extend the hairline forward to reduce forehead prominence.
+3. Density: Ensure high hair density in the filled areas. No scalp visible.
+4. Consistency: Match existing hair characteristics. Keep facial features and background unchanged.`,
 
-Keep the same face, expression, skin, ears, background, hair color, and hair length.`,
+  top: `Edit this photo to create a realistic, high-density hair transplant result from the top view.
 
-  lateral_right: `Edit this photo to show hair transplant results from the right side.
-
-Fill the temple area completely — the gap between the top of the head and the ear must be covered with dense hair flowing down to the sideburn. No bare skin visible at the temple. Lower the hairline so it starts further forward on the forehead.
-
-Keep the same face, expression, skin, ears, background, hair color, and hair length.`,
-
-  top: `Edit this photo to show hair transplant results from above.
-
-Add dense hair covering every spot where scalp skin is visible. The hairline extends further forward. No bald spots anywhere. Natural growth direction.
-
-Keep the same hair color and length. Only add density and coverage.`,
+1. Coverage: Fill the entire top area (crown, vertex, mid-scalp) with dense hair.
+2. Hairline: Show a lower, continuous, and thick hairline at the front.
+3. Density: Maximize density to ensure no scalp is visible.
+4. Natural: Match the natural growth direction and texture. Remove any surgical markings if present.`,
 };
 
 export const restoreHairForAngle = async (

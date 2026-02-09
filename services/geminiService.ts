@@ -47,77 +47,83 @@ You are a photorealistic hair transplant simulation engine. You edit photos to s
 
 MULTI-IMAGE INPUT: These are multiple photos of the SAME person from different angles. Use all of them to understand their face, hair color, and hair texture.
 
-=== WHAT YOU MUST CHANGE (HAIR ONLY) ===
+=== ABSOLUTE CONSTRAINT — HAIR LENGTH AND STYLE ===
 
-1. LOWER THE HAIRLINE DRAMATICALLY:
-- Move the hairline FORWARD (toward the eyebrows) by 2-3 cm. The forehead MUST appear visibly SHORTER in the output.
-- The new hairline shape: a gentle convex wave with micro-zigzag irregularities (never a straight line).
-- Add "sentinel hairs" — a few single hairs scattered 2-3mm in front of the main hairline for a gradual skin-to-hair transition.
-- VALIDATION: Measure the forehead in the input (from eyebrows to hairline). In the output, this distance MUST be noticeably smaller. If the forehead looks the same size, YOU HAVE FAILED.
+This is the MOST IMPORTANT rule. Read it carefully:
+- The hair in the output MUST be the EXACT SAME LENGTH and STYLE as the patient's existing hair in the input photos.
+- Do NOT make hair longer. Do NOT change the hairstyle. Do NOT add flowing or wavy long hair.
+- "More hair" means NEW FOLLICLES GROWING in areas that were previously bald/thin. It does NOT mean longer hair.
+- If the patient has short hair in the input, the output must show short hair. If medium hair, then medium hair.
+- The transplant adds DENSITY (more hairs per cm²) to bald zones. It does NOT change hair length or style.
+- VIOLATION CHECK: If the hair in your output is longer than in the input, YOU HAVE FAILED. Start over.
 
-2. FILL ALL TEMPLE RECESSION ("ENTRADAS") COMPLETELY:
-- The bald triangular areas at both temples must be 100% covered with hair. ZERO bare skin remaining.
-- Temple hair grows at very acute angles, pointing downward toward the face.
-- Temple edges are feathered (lighter density than center) for a natural look.
-- Rebuild sharp temple points that frame the face.
+=== WHAT YOU MUST CHANGE ===
+
+1. LOWER THE HAIRLINE — MAKE THE FOREHEAD SMALLER:
+- Look at the input: the forehead (skin between eyebrows and where hair begins) is large because the hairline has receded.
+- In your output: NEW SHORT HAIRS must grow from the previously bald forehead skin. The area of visible forehead skin must be REDUCED by 30-40%.
+- Think of it as: the upper portion of the forehead that is currently bare skin becomes covered with new hair follicles. The hair starts growing from LOWER on the forehead.
+- Proportion guide: if the forehead currently takes up ~40% of the face height, after the transplant it should take up ~25-30%.
+- The new hairline border has a gentle convex wave shape with micro-zigzag irregularities (never a straight line). A few "sentinel hairs" scatter 2-3mm in front of the main hairline.
+- VALIDATION: Compare forehead size in input vs output. The forehead MUST be visibly smaller. If it looks the same size, YOU HAVE FAILED.
+
+2. FILL ALL TEMPLE RECESSION ("ENTRADAS"):
+- The bald triangular areas at both temples must be 100% covered with new hair. ZERO bare skin remaining.
+- The new temple hair has the SAME length as the patient's existing hair. It grows at acute angles pointing downward toward the face.
+- Temple edges are feathered (lighter density than center).
 - VALIDATION: If any bare skin is visible in the temple triangles, YOU HAVE FAILED.
 
 3. COVER ALL VISIBLE SCALP:
-- Every area where scalp/skin shows through thin hair in the input MUST be covered with dense hair in the output.
-- Hair must have natural volume and body — not flat against the scalp.
-- No scalp skin should be visible through the hair from any angle.
-- VALIDATION: If scalp skin is still visible through the hair in the output, YOU HAVE FAILED.
-
-4. HAIR TEXTURE RULES:
-- SAME color, texture, and thickness as the patient's existing hair.
-- Frontal zone: hair angles forward at 15-20°.
-- Temples: hair angles downward toward the face.
-- Crown: natural whorl/spiral pattern.
-- Hair has volume and natural movement — not plastered flat.
+- Every area where scalp/skin shows through thin hair MUST be filled with new hair follicles until the scalp is completely hidden.
+- This means MORE HAIRS growing from the scalp at the root level — NOT longer hairs draped over.
+- VALIDATION: If scalp skin is still visible through the hair, YOU HAVE FAILED.
 
 === WHAT YOU MUST NOT CHANGE ===
 
+- HAIR LENGTH AND STYLE: Keep the exact same length, cut, and styling as the input. This is critical.
 - Face: Do NOT alter skin, features, expression, beard, eyebrows, ears, nose, eyes — NOTHING.
 - Environment: Same lighting, background, clothing, jewelry, shadows, color temperature.
 - Photo quality: Match the exact photographic quality of the input. No AI artifacts, no painted/smooth look.
-- Donor area (back/sides of head): stays unchanged.
 
 === SELF-CHECK BEFORE OUTPUTTING ===
 
-Compare your output mentally against the input:
-1. Is the forehead visibly shorter? If NO → redo with lower hairline.
-2. Are temple triangles fully filled? If NO → add more temple hair.
-3. Is scalp skin hidden everywhere? If NO → increase density.
-4. Does the face look identical? If NO → you changed too much, preserve the face.
-5. Does it look like a real photo? If NO → reduce artificial look.
-
-The transformation must be DRAMATIC — like going from Norwood 3-4 to Norwood 1. If your output looks similar to the input, the simulation is worthless.
+1. Is the hair the SAME LENGTH as the input? If NO → you changed the hairstyle, REDO.
+2. Is the forehead visibly smaller/shorter? If NO → lower the hairline more, REDO.
+3. Are temple recession areas fully filled with hair? If NO → add more temple hair.
+4. Is scalp skin hidden everywhere? If NO → increase follicle density.
+5. Does the face look identical to the input? If NO → preserve the face better.
+6. Does it look like a real photograph? If NO → reduce artificial look.
 `;
 
 const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
 === GENERATE: FRONTAL VIEW (face looking at camera, same pose as input) ===
 
-STEP-BY-STEP EDITING INSTRUCTIONS:
+STEP-BY-STEP INSTRUCTIONS:
 
-STEP 1 — LOWER THE HAIRLINE:
-- Locate the current hairline in the input. Note how far it is from the eyebrows.
-- In your output, ADD HAIR to the forehead area so the hairline starts 2-3 cm LOWER (closer to the eyebrows). Paint new hair onto the upper forehead skin.
-- The forehead must look VISIBLY SHORTER than in the input photo. This is the #1 priority.
+STEP 1 — PRESERVE HAIR LENGTH AND STYLE (do this FIRST):
+- Look at the patient's current hair length and hairstyle in the input.
+- Your output MUST show the EXACT SAME hair length and style. If they have short hair, output short hair. If medium, then medium.
+- Do NOT add long hair, flowing hair, or change the hairstyle in any way.
 
-STEP 2 — FILL BOTH TEMPLE TRIANGLES:
-- Locate the two bald triangular areas ("entradas") at the left and right temples.
-- PAINT HAIR over these entire triangles. No bare skin should remain. Both temples must have hair covering them completely.
-- The new temple hair should be finer/lighter at the edges (feathered) and angle downward.
+STEP 2 — SHRINK THE FOREHEAD (the #1 visible change):
+- In the input, the forehead is large because the hairline has receded high.
+- In your output, new hair follicles must grow from the UPPER FOREHEAD SKIN — the area that is currently bare.
+- The visible forehead area must SHRINK by 30-40%. If the forehead was taking ~40% of face height, it should now take ~25-30%.
+- The new hairs on the upper forehead are the SAME length as the existing hair. They are simply new follicles growing where before there was only skin.
+- New hairline shape: gentle convex wave with irregular micro-zigzag border. A few sentinel hairs 2-3mm in front.
 
-STEP 3 — INCREASE DENSITY:
-- All areas where scalp shows through thin hair: add more hair until scalp is hidden.
-- Hair should have natural volume and body.
+STEP 3 — FILL BOTH TEMPLE TRIANGLES:
+- The two bald triangular areas ("entradas") at both temples: cover them 100% with new hair follicles.
+- No bare skin remaining in the temple zone. Temple hair angles downward, feathered at edges.
 
-STEP 4 — VERIFY FACE IS UNCHANGED:
-- The face, beard, skin, eyes, nose, ears, expression must be IDENTICAL to the input.
+STEP 4 — INCREASE DENSITY WHERE SCALP SHOWS:
+- Anywhere scalp is visible through thin hair: add more follicles until scalp is hidden.
 
-OUTPUT: One photorealistic frontal photo. The forehead must be visibly shorter and temples fully covered.
+STEP 5 — VERIFY:
+- Hair length unchanged? Face identical? Forehead visibly smaller? Temples filled?
+
+OUTPUT: One photorealistic frontal photo. Forehead visibly smaller, same hair length/style.
 `,
 
   lateral_left: `
@@ -128,22 +134,25 @@ CAMERA ORIENTATION (do not flip sides):
 - Nose points to the RIGHT side of the frame.
 - The LEFT EAR is visible. The RIGHT ear is NOT visible.
 
-STEP-BY-STEP EDITING INSTRUCTIONS:
+STEP-BY-STEP INSTRUCTIONS:
 
-STEP 1 — FILL THE LEFT TEMPLE GAP:
-- In the input, there is a visible bald/thin area at the left temple — a concave gap or triangular bare skin between the frontal hairline and the hair above the ear.
-- PAINT HAIR over this entire gap. The silhouette from forehead to ear must become a smooth, continuous curve of hair with NO bald dip.
-- Temple hair angles downward toward the face and connects to the sideburn.
+STEP 1 — PRESERVE HAIR LENGTH AND STYLE:
+- The hair must remain the EXACT same length and style as the input. Do NOT make it longer or change the hairstyle.
 
-STEP 2 — ADVANCE THE HAIRLINE FORWARD:
-- The hairline visible from this side angle must start LOWER on the forehead than in the input.
-- Add hair to the upper forehead/temple region to bring the hairline forward.
+STEP 2 — FILL THE LEFT TEMPLE GAP:
+- In the input, there is a bald/thin area at the left temple — a concave gap between the frontal hairline and the hair above the ear.
+- New hair follicles must grow in this entire gap area. The silhouette from forehead to ear must become a smooth, continuous curve of hair with NO bald dip.
+- The new temple hair is the SAME LENGTH as the existing hair. It angles downward toward the face and connects to the sideburn.
 
-STEP 3 — ENSURE DENSITY:
-- No scalp visible through the hair anywhere on the visible side.
-- Hair has natural thickness and volume.
+STEP 3 — LOWER THE HAIRLINE FROM THIS ANGLE:
+- From the side view, the point where hair starts on the forehead must be LOWER/FURTHER FORWARD than in the input.
+- New follicles grow from the previously bare forehead skin, reducing the visible forehead from this profile angle.
+- The forehead visible from this side must appear smaller than in the input.
 
-OUTPUT: One photorealistic LEFT profile photo. Temple gap completely filled, hairline visibly lower.
+STEP 4 — ENSURE DENSITY:
+- No scalp visible through the hair. Natural thickness and volume.
+
+OUTPUT: One photorealistic LEFT profile. Temple filled, forehead smaller, SAME hair length.
 `,
 
   lateral_right: `
@@ -154,47 +163,54 @@ CAMERA ORIENTATION (do not flip sides):
 - Nose points to the LEFT side of the frame.
 - The RIGHT EAR is visible. The LEFT ear is NOT visible.
 
-STEP-BY-STEP EDITING INSTRUCTIONS:
+STEP-BY-STEP INSTRUCTIONS:
 
-STEP 1 — FILL THE RIGHT TEMPLE GAP:
-- In the input, there is a visible bald/thin area at the right temple — a concave gap or triangular bare skin between the frontal hairline and the hair above the ear.
-- PAINT HAIR over this entire gap. The silhouette from forehead to ear must become a smooth, continuous curve of hair with NO bald dip.
-- Temple hair angles downward toward the face and connects to the sideburn.
+STEP 1 — PRESERVE HAIR LENGTH AND STYLE:
+- The hair must remain the EXACT same length and style as the input. Do NOT make it longer or change the hairstyle.
 
-STEP 2 — ADVANCE THE HAIRLINE FORWARD:
-- The hairline visible from this side angle must start LOWER on the forehead than in the input.
-- Add hair to the upper forehead/temple region to bring the hairline forward.
+STEP 2 — FILL THE RIGHT TEMPLE GAP:
+- In the input, there is a bald/thin area at the right temple — a concave gap between the frontal hairline and the hair above the ear.
+- New hair follicles must grow in this entire gap area. The silhouette from forehead to ear must become a smooth, continuous curve of hair with NO bald dip.
+- The new temple hair is the SAME LENGTH as the existing hair. It angles downward toward the face and connects to the sideburn.
 
-STEP 3 — ENSURE DENSITY:
-- No scalp visible through the hair anywhere on the visible side.
-- Hair has natural thickness and volume.
+STEP 3 — LOWER THE HAIRLINE FROM THIS ANGLE:
+- From the side view, the point where hair starts on the forehead must be LOWER/FURTHER FORWARD than in the input.
+- New follicles grow from the previously bare forehead skin, reducing the visible forehead from this profile angle.
+- The forehead visible from this side must appear smaller than in the input.
 
-OUTPUT: One photorealistic RIGHT profile photo. Temple gap completely filled, hairline visibly lower.
+STEP 4 — ENSURE DENSITY:
+- No scalp visible through the hair. Natural thickness and volume.
+
+OUTPUT: One photorealistic RIGHT profile. Temple filled, forehead smaller, SAME hair length.
 `,
 
   top: `
 === GENERATE: TOP-DOWN VIEW (looking down at the top of the head) ===
 
-STEP-BY-STEP EDITING INSTRUCTIONS:
+STEP-BY-STEP INSTRUCTIONS:
 
-STEP 1 — COVER ALL VISIBLE SCALP:
-- In the input, scalp skin is visible through thin hair on top. Identify EVERY area where pink/white scalp skin shows through.
-- PAINT DENSE HAIR over ALL of these areas. Not longer hair — MORE hair. Increase the NUMBER of hair strands, not just length.
-- After your edit, looking down at the head, you should see ONLY HAIR, ZERO SCALP SKIN.
+STEP 1 — PRESERVE HAIR LENGTH AND STYLE:
+- The hair must remain the EXACT same length as the input. Do NOT make hair longer.
+- The change is DENSITY (more follicles per cm²), NOT length.
 
-STEP 2 — EXTEND HAIRLINE FORWARD:
-- The front edge of the hair (visible from this top angle) must start FURTHER FORWARD on the head than in the input.
-- Add hair to the frontal zone so it begins lower on the forehead.
+STEP 2 — ADD NEW FOLLICLES TO COVER ALL SCALP:
+- Look at the input from above: identify every spot where pink/white scalp skin is visible through the hair.
+- In each of those spots, add NEW HAIR FOLLICLES growing from the scalp at the root level.
+- This means more individual hair STRANDS of the same length — NOT longer strands draped over bald spots.
+- The result: looking down, you see a DENSE carpet of hair with ZERO scalp skin visible anywhere.
+- Think of it as: the number of hairs per square centimeter DOUBLES or TRIPLES in thin areas.
 
-STEP 3 — NATURAL HAIR DIRECTION:
-- Frontal zone: hair flows forward.
-- Mid-scalp: hair flows front-to-back.
-- Crown: natural whorl/spiral pattern.
-- Hair has volume — not flat against the scalp.
+STEP 3 — EXTEND HAIRLINE FORWARD:
+- From this top angle, the front edge of the hair must start FURTHER FORWARD on the head than in the input.
+- New follicles grow on the previously bare upper forehead skin.
 
-CRITICAL: The #1 goal for this angle is SCALP COVERAGE. If ANY scalp skin is visible through the hair in your output, YOU HAVE FAILED. The difference between input and output should be dramatic: input shows scalp through thin hair, output shows only dense hair with zero scalp visible.
+STEP 4 — NATURAL HAIR DIRECTION:
+- Frontal zone: hair flows forward. Mid-scalp: front-to-back. Crown: natural whorl/spiral.
+- Hair has volume — not flat.
 
-OUTPUT: One photorealistic top-down photo. Complete scalp coverage — no skin visible through hair.
+CRITICAL: The #1 goal is TOTAL SCALP COVERAGE through INCREASED FOLLICLE DENSITY (not longer hair). Input shows scalp through thin hair → output shows only dense hair, zero scalp visible.
+
+OUTPUT: One photorealistic top-down photo. Complete scalp coverage, same hair length as input.
 `,
 };
 

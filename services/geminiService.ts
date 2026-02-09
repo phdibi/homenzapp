@@ -42,84 +42,67 @@ const compressImage = (base64DataUrl: string, maxSize = 1024, quality = 0.8): Pr
   });
 };
 
+const SYSTEM_INSTRUCTION = `You are a clinical hair restoration imaging specialist. You produce photorealistic FUE hair transplant simulation images for surgical planning. You ONLY output the edited photo — no text, no explanation.`;
+
 const BASE_FUE_PROMPT = `
-You are a photorealistic image editor. You simulate FUE hair transplant results.
+Professional medical hair transplant simulation on the provided portrait.
 
-INPUT: Multiple photos of the SAME person showing hair loss.
+This patient will receive 3500 follicular unit grafts. Simulate the result 12 months post-op:
 
-YOUR TASK: Edit the photo to show this person 12 months after a 3500-graft FUE transplant. The transformation must be DRAMATIC and visible.
+1. Redefine and lower the anterior hairline to a natural youthful position following facial symmetry — the forehead must occupy only the upper third of the face (rule of thirds). The new hairline has a soft irregular micro-zigzag border with sparse single-follicle units at the very edge, transitioning to dense multi-follicular units 1cm behind.
 
-=== HAIR TRANSPLANT ZONE MAP ===
+2. Reconstruct the temporal recessions bilaterally — fill both temple triangles completely with follicular units angled downward and slightly backward, creating sharp temporal points that flow seamlessly into the sideburns.
 
-A surgeon would draw these zones on the patient's head before surgery. You must fill each zone with hair:
+3. Increase follicular density across all thinning areas — plant dense follicular units wherever scalp skin is visible through existing hair. No bare scalp visible anywhere.
 
-ZONE A — NEW HAIRLINE (the soft front edge):
-Position the new hairline about 7-8cm above the eyebrows (roughly 4 finger-widths). The face should follow the rule of thirds: forehead = 1/3, mid-face = 1/3, lower face = 1/3. Currently the forehead is too tall — hair must grow lower to restore this proportion. The hairline border is slightly irregular/wavy (zigzag, NOT straight). At the very front edge: sparse thin individual hairs creating a soft see-through border. Just behind (1-2cm): progressively denser hair.
+4. Ensure seamless integration between existing hair and simulated grafts — match the original hair color, texture, curl pattern, and length exactly. The transplanted follicles produce hair at the same length as the patient's current hair.
 
-ZONE B — TEMPLE POINTS (the side corners):
-Sharp angular corners of hair on each side where the hairline meets the temple. Hair here grows DOWNWARD and slightly backward at very flat angles against the skin. The temples must transition smoothly into the sideburns — no gaps, no bald patches on the sides of the head.
-
-ZONE C — FRONTAL DENSITY (the main mass behind the hairline):
-Dense thick hair behind the new hairline. This is where the visual "fullness" comes from. No scalp visible. Same hair length as patient's existing hair.
-
-ZONE D — MID-SCALP & CROWN:
-Fill any thin areas where scalp shows through. Natural whorl pattern at crown. Hair flows front-to-back.
-
-=== PRESERVE (do not alter) ===
-- Face, skin, beard, expression — identical to input
-- Hair length and hairstyle — same cut, just more density and coverage
-- Background, lighting, clothing, photo quality
+Constraints: preserve the person's facial identity, expression, skin, beard, ears, background, lighting, and clothing exactly. No altered face shape, no plastic appearance, no blurring, no changed hair color, no lengthened hair, no surgical artifacts, no scarring.
 `;
 
 const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
-OUTPUT: One FRONTAL photo (face looking at camera, same pose as input).
+Output one frontal photo — face looking directly at camera, same pose as input.
 
-The patient's hairstyle and hair length must stay EXACTLY as they are now. Only the COVERAGE AREA changes — hair now grows where before there was bald skin.
+Priority changes visible from this angle:
+1. The forehead is currently too tall. Lower the anterior hairline so the forehead occupies only the upper third of the face. New hairline has a soft micro-irregular border — sparse single follicles at the edge, dense growth just behind.
+2. Both temporal recession triangles completely filled — sharp angular temporal points frame the upper face with zero bare skin at the temples.
+3. Dense follicular coverage behind the hairline — no scalp visible through the hair.
 
-KEY CHANGES — apply the zone map to this frontal view:
-1. ZONE A: New hairline ~7-8cm above eyebrows. The face must follow the rule of thirds — forehead = 1/3 of face height. Currently the forehead is too tall. Soft irregular border with sparse single hairs at the very edge, denser 1-2cm behind.
-2. ZONE B: Both bald temple triangles COMPLETELY filled with hair. Sharp temple points framing the face — zero bare skin on the sides.
-3. ZONE C: Dense hair behind the new hairline. No scalp visible anywhere.
-
-Face identical to input. Same hair length — only more coverage.
+Same hair length and style. Face identical to input.
 `,
 
   lateral_left: `
-OUTPUT: One LEFT SIDE PROFILE photo.
+Output one left lateral profile photo — showing left cheek, left ear, left jawline. Nose points right.
 
-CAMERA: Shows LEFT cheek, LEFT ear, LEFT jawline. Nose points RIGHT. LEFT EAR visible, RIGHT ear NOT visible.
-
-KEY CHANGES — apply the zone map to this side view:
-1. ZONE B (most visible change from this angle): The bald area on the side of the head between the forehead and the ear must be COMPLETELY filled. Hair flows continuously from the top of the head down past the temple to the ear — zero bald patches on the side. Temple hair grows DOWNWARD at flat angles against the skin, transitioning smoothly into the sideburn.
-2. ZONE A: Hairline starts LOWER/further forward on the forehead than in the input. Soft irregular edge.
-3. ZONE C: Thick full hair everywhere behind the hairline — no scalp peeking through.
+Priority changes visible from this angle:
+1. The temporal recession on the left side is the most visible defect from this angle. Fill the entire bald area between the forehead and the ear with dense follicular units angled downward — hair flows continuously from the crown past the temple to the sideburn with zero gaps or bare patches.
+2. The anterior hairline must start further forward (lower) on the forehead than in the input — a soft irregular transition from skin to dense hair.
+3. Full density everywhere — no scalp visible through the hair from this side view.
 
 Same hair length and style. Face identical to input.
 `,
 
   lateral_right: `
-OUTPUT: One RIGHT SIDE PROFILE photo.
+Output one right lateral profile photo — showing right cheek, right ear, right jawline. Nose points left.
 
-CAMERA: Shows RIGHT cheek, RIGHT ear, RIGHT jawline. Nose points LEFT. RIGHT EAR visible, LEFT ear NOT visible.
-
-KEY CHANGES — apply the zone map to this side view:
-1. ZONE B (most visible change from this angle): The bald area on the side of the head between the forehead and the ear must be COMPLETELY filled. Hair flows continuously from the top of the head down past the temple to the ear — zero bald patches on the side. Temple hair grows DOWNWARD at flat angles against the skin, transitioning smoothly into the sideburn.
-2. ZONE A: Hairline starts LOWER/further forward on the forehead than in the input. Soft irregular edge.
-3. ZONE C: Thick full hair everywhere behind the hairline — no scalp peeking through.
+Priority changes visible from this angle:
+1. The temporal recession on the right side is the most visible defect from this angle. Fill the entire bald area between the forehead and the ear with dense follicular units angled downward — hair flows continuously from the crown past the temple to the sideburn with zero gaps or bare patches.
+2. The anterior hairline must start further forward (lower) on the forehead than in the input — a soft irregular transition from skin to dense hair.
+3. Full density everywhere — no scalp visible through the hair from this side view.
 
 Same hair length and style. Face identical to input.
 `,
 
   top: `
-OUTPUT: One TOP-DOWN photo (looking down at the top of the head).
+Output one top-down photo — looking down at the crown and top of the head.
 
-KEY CHANGES — apply the zone map to this top view:
-1. ZONE A: Hair starts FURTHER FORWARD on the head (lower hairline visible from above). Soft irregular border at the front edge.
-2. ZONE C + D: Complete scalp coverage. Zero skin visible anywhere. Dense carpet of hair filling every thin spot.
-3. Natural hair direction: flows forward in front, front-to-back on mid-scalp, whorl pattern at crown.
+Priority changes visible from this angle:
+1. The anterior hairline extends further forward — hair covers more of the forehead area when viewed from above. Soft irregular front edge.
+2. Complete scalp coverage — dense follicular units fill every thin spot. Zero skin visible through the hair anywhere on the scalp.
+3. Natural growth direction: forward flow at the frontal zone, front-to-back on mid-scalp, clockwise whorl pattern at the crown vertex.
 
-Same hair length — the change is DENSITY and COVERAGE, not length.
+Same hair length — the change is density and coverage, not length.
 `,
 };
 
@@ -159,6 +142,11 @@ export const restoreHairForAngle = async (
         ...imageParts,
         { text: BASE_FUE_PROMPT + ANGLE_PROMPTS[angle] }
       ]
+    },
+    config: {
+      temperature: 0.3,
+      responseModalities: ['image'],
+      systemInstruction: SYSTEM_INSTRUCTION,
     }
   });
 

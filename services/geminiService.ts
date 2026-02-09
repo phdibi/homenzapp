@@ -42,6 +42,141 @@ const compressImage = (base64DataUrl: string, maxSize = 1024, quality = 0.8): Pr
   });
 };
 
+/**
+ * Desenha guia visual (overlay verde + linha tracejada) sobre uma CÓPIA da imagem
+ * para mostrar ao modelo ONDE adicionar folículos capilares.
+ * Retorna null para ângulo 'top' (já funciona bem sem guia).
+ */
+const drawVisualGuide = (base64DataUrl: string, angle: SimulationAngle): Promise<string | null> => {
+  if (angle === 'top') return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d')!;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Desenha a imagem original como base
+      ctx.drawImage(img, 0, 0);
+
+      if (angle === 'frontal') {
+        // --- FRONTAL: overlay na testa + curva "M" da nova hairline ---
+        const hairlineY = h * 0.38;  // posição target da nova hairline
+        const templeY = h * 0.30;    // temple points (mais altos que o centro)
+
+        // Overlay verde semi-transparente na zona "add hair here"
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.18)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(w, 0);
+        ctx.lineTo(w, templeY);
+        ctx.quadraticCurveTo(w * 0.75, hairlineY, w * 0.5, hairlineY);
+        ctx.quadraticCurveTo(w * 0.25, hairlineY, 0, templeY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Linha tracejada verde — nova hairline em curva "M"
+        ctx.strokeStyle = 'rgba(0, 180, 0, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 6]);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.05, templeY);
+        ctx.quadraticCurveTo(w * 0.25, hairlineY, w * 0.5, hairlineY);
+        ctx.quadraticCurveTo(w * 0.75, hairlineY, w * 0.95, templeY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.font = `bold ${Math.round(w * 0.03)}px sans-serif`;
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.85)';
+        ctx.textAlign = 'center';
+        ctx.fillText('ADD HAIR HERE', w * 0.5, hairlineY * 0.6);
+
+      } else if (angle === 'lateral_left') {
+        // --- LATERAL LEFT: nose points right → temple area is on LEFT side ---
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.18)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(w * 0.6, 0);
+        ctx.lineTo(w * 0.6, h * 0.2);
+        ctx.quadraticCurveTo(w * 0.45, h * 0.35, w * 0.2, h * 0.4);
+        ctx.quadraticCurveTo(w * 0.1, h * 0.38, 0, h * 0.35);
+        ctx.closePath();
+        ctx.fill();
+
+        // Linha tracejada — contorno do temple
+        ctx.strokeStyle = 'rgba(0, 180, 0, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 6]);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.6, h * 0.2);
+        ctx.quadraticCurveTo(w * 0.45, h * 0.35, w * 0.2, h * 0.4);
+        ctx.quadraticCurveTo(w * 0.1, h * 0.38, 0, h * 0.35);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.font = `bold ${Math.round(w * 0.03)}px sans-serif`;
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.85)';
+        ctx.textAlign = 'center';
+        ctx.fillText('FILL TEMPLE', w * 0.25, h * 0.22);
+
+      } else if (angle === 'lateral_right') {
+        // --- LATERAL RIGHT: nose points left → temple area is on RIGHT side ---
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.18)';
+        ctx.beginPath();
+        ctx.moveTo(w, 0);
+        ctx.lineTo(w * 0.4, 0);
+        ctx.lineTo(w * 0.4, h * 0.2);
+        ctx.quadraticCurveTo(w * 0.55, h * 0.35, w * 0.8, h * 0.4);
+        ctx.quadraticCurveTo(w * 0.9, h * 0.38, w, h * 0.35);
+        ctx.closePath();
+        ctx.fill();
+
+        // Linha tracejada — contorno do temple
+        ctx.strokeStyle = 'rgba(0, 180, 0, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 6]);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.4, h * 0.2);
+        ctx.quadraticCurveTo(w * 0.55, h * 0.35, w * 0.8, h * 0.4);
+        ctx.quadraticCurveTo(w * 0.9, h * 0.38, w, h * 0.35);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.font = `bold ${Math.round(w * 0.03)}px sans-serif`;
+        ctx.fillStyle = 'rgba(0, 180, 0, 0.85)';
+        ctx.textAlign = 'center';
+        ctx.fillText('FILL TEMPLE', w * 0.75, h * 0.22);
+      }
+
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = () => resolve(null);
+    img.src = base64DataUrl;
+  });
+};
+
+/**
+ * Prepara a imagem guia anotada como API part.
+ * Retorna null para ângulo 'top' (não precisa de guia).
+ */
+const prepareGuidePart = async (
+  base64Images: string[],
+  angle: SimulationAngle
+): Promise<{ inlineData: { data: string; mimeType: string } } | null> => {
+  if (angle === 'top') return null;
+  const compressed = await compressImage(base64Images[0]);
+  const guide = await drawVisualGuide(compressed, angle);
+  if (!guide) return null;
+  return { inlineData: { data: guide.split(',')[1], mimeType: 'image/jpeg' } };
+};
+
 const SYSTEM_INSTRUCTION = `You are a clinical hair restoration imaging specialist. You produce photorealistic FUE hair transplant simulation images for surgical planning. You ONLY output the edited photo — no text, no explanation.`;
 
 const BASE_FUE_PROMPT = `
@@ -64,6 +199,8 @@ const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
 Output one frontal photo — face looking directly at camera, same pose as input.
 
+Refer to the visual guide: plant follicles in all green-tinted areas, bringing the hairline down to the dashed line position.
+
 Priority changes visible from this angle:
 1. The forehead is currently too tall. Lower the anterior hairline so the forehead occupies only the upper third of the face. New hairline has a soft micro-irregular border — sparse single follicles at the edge, dense growth just behind.
 2. Both temporal recession triangles completely filled — sharp angular temporal points frame the upper face with zero bare skin at the temples.
@@ -75,6 +212,8 @@ Same hair length and style. Face identical to input.
   lateral_left: `
 Output one left lateral profile photo — showing left cheek, left ear, left jawline. Nose points right.
 
+Refer to the visual guide: fill the green-tinted temple area completely with follicular units.
+
 Priority changes visible from this angle:
 1. The temporal recession on the left side is the most visible defect from this angle. Fill the entire bald area between the forehead and the ear with dense follicular units angled downward — hair flows continuously from the crown past the temple to the sideburn with zero gaps or bare patches.
 2. The anterior hairline must start further forward (lower) on the forehead than in the input — a soft irregular transition from skin to dense hair.
@@ -85,6 +224,8 @@ Same hair length and style. Face identical to input.
 
   lateral_right: `
 Output one right lateral profile photo — showing right cheek, right ear, right jawline. Nose points left.
+
+Refer to the visual guide: fill the green-tinted temple area completely with follicular units.
 
 Priority changes visible from this angle:
 1. The temporal recession on the right side is the most visible defect from this angle. Fill the entire bald area between the forehead and the ear with dense follicular units angled downward — hair flows continuously from the crown past the temple to the sideburn with zero gaps or bare patches.
@@ -105,6 +246,16 @@ Priority changes visible from this angle:
 Same hair length — the change is density and coverage, not length.
 `,
 };
+
+const GUIDE_PROMPT_PREFIX = `
+VISUAL GUIDE: The LAST image has green-tinted overlay areas and a dashed line. This is NOT a separate patient photo — it is a guide showing WHERE to add new follicles.
+
+- GREEN AREAS = bare skin that must be covered with new hair
+- DASHED LINE = target position for the new anterior hairline
+
+Edit the CLEAN patient photos (all images except the last). DO NOT reproduce any green overlay, lines, or labels in your output.
+
+`;
 
 /**
  * Prepara as imagens comprimidas e convertidas em parts para a API.
@@ -134,13 +285,22 @@ export const restoreHairForAngle = async (
 ): Promise<string> => {
   const ai = getAI();
   const imageParts = await prepareImageParts(base64Images);
+  const guidePart = await prepareGuidePart(base64Images, angle);
+
+  // Monta parts: fotos limpas primeiro, guia visual por último (se houver)
+  const allParts: Array<{ inlineData: { data: string; mimeType: string } }> = [...imageParts];
+  let promptPrefix = '';
+  if (guidePart) {
+    allParts.push(guidePart);
+    promptPrefix = GUIDE_PROMPT_PREFIX;
+  }
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
       parts: [
-        ...imageParts,
-        { text: BASE_FUE_PROMPT + ANGLE_PROMPTS[angle] }
+        ...allParts,
+        { text: promptPrefix + BASE_FUE_PROMPT + ANGLE_PROMPTS[angle] }
       ]
     },
     config: {

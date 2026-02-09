@@ -119,45 +119,46 @@ I will show you my patient's top view next.`,
 // ---------------------------------------------------------------------------
 
 const PATIENT_PROMPT: Record<SimulationAngle, string> = {
-  frontal: `Now here is my patient's frontal photo. Generate a photorealistic image showing what this SAME person would look like after the same type of hair transplant you just analyzed.
+  frontal: `Now here is my patient's frontal photo. Generate a photorealistic image showing what this SAME person would look like after the same type of dramatic hair transplant you just analyzed.
 
-The result must show:
-- Hair growing on the previously bare forehead skin, making the forehead visibly shorter
-- Both temple corners completely filled with thick hair, no M-shape remaining
-- Dense hair coverage everywhere, no scalp visible through the hair
-- Same face, skin, expression, ears, beard, clothing, background, hair color, and hair length
+CRITICAL changes required — the transformation must be VERY visible:
+- Paint thick hair on ALL the bare forehead skin above the eyebrows. The new hairline must sit VERY LOW — only 2-3 finger widths above the eyebrows. The forehead must look dramatically smaller than in the input photo.
+- Both temple corners (the "M" shape) must be COMPLETELY filled with thick hair — zero bare skin at the temples.
+- Every area where scalp is visible must be covered with dense hair matching the thickest parts of existing hair.
+- Keep the exact same face, skin, expression, ears, beard, clothing, background, hair color, and hair length.
 
-Output one photorealistic photo of this person with the transplant result.`,
+This is a medical simulation — the result must show a DRAMATIC difference from the input. Output one photorealistic frontal photo.`,
 
-  lateral_left: `Here is my patient's left side photo. Generate a photorealistic image of this SAME person after the same hair transplant transformation.
+  lateral_left: `Here is my patient's left side photo. Generate a photorealistic image of this SAME person after the same dramatic hair transplant transformation.
 
-The result must show:
-- The bare temple area between forehead and ear completely covered with dense hair
-- A smooth hairline silhouette from forehead to behind the ear with no gaps
-- Full density, no scalp visible from this angle
-- Same face, pose, background, hair color and length
+CRITICAL changes from this angle:
+- The entire temple area (the bare skin triangle between the top of the head and the ear) must be COMPLETELY covered with thick hair. Zero bare skin visible in the temple region.
+- The hairline must start much further FORWARD on the forehead — the forehead profile must look dramatically shorter.
+- The silhouette line of hair from forehead to behind the ear must be one smooth, continuous, dense curve with no gaps or thin spots.
+- Keep the exact same face, pose, background, hair color and hair length.
 
-Output one photorealistic left-side photo.`,
+Output one photorealistic left-side photo showing a dramatic transformation.`,
 
-  lateral_right: `Here is my patient's right side photo. Generate a photorealistic image of this SAME person after the same type of hair transplant, mirrored to the right side.
+  lateral_right: `Here is my patient's right side photo. Generate a photorealistic image of this SAME person after the same dramatic hair transplant, mirrored to the right side.
 
-The result must show:
-- The bare temple area between forehead and ear completely covered with dense hair
-- A smooth hairline silhouette from forehead to behind the ear with no gaps
-- Full density, no scalp visible from this angle
-- Same face, pose, background, hair color and length
+CRITICAL changes from this angle:
+- The entire temple area (the bare skin triangle between the top of the head and the ear) must be COMPLETELY covered with thick hair. Zero bare skin visible in the temple region.
+- The hairline must start much further FORWARD on the forehead — the forehead profile must look dramatically shorter.
+- The silhouette line of hair from forehead to behind the ear must be one smooth, continuous, dense curve with no gaps or thin spots.
+- Keep the exact same face, pose, background, hair color and hair length.
 
-Output one photorealistic right-side photo.`,
+Output one photorealistic right-side photo showing a dramatic transformation.`,
 
-  top: `Here is my patient's top-of-head photo. Generate a photorealistic image of this SAME person's head from above after the same hair transplant transformation.
+  top: `Here is my patient's top-of-head photo. Generate a photorealistic image of this SAME person's head from above after the same dramatic hair transplant transformation.
 
-The result must show:
-- Complete scalp coverage, no bare skin visible anywhere from above
-- The hairline extending further forward than the current state
-- Natural growth direction: forward at front, clockwise whorl at crown
-- Same hair color and texture, just dramatically more coverage
+CRITICAL changes from above:
+- The hairline must extend MUCH further forward — at least 3-4cm more forward than in the input photo. The bare forehead area visible from above must be dramatically reduced.
+- Every single spot where scalp skin is visible must be covered with thick, dense hair. Zero bald patches.
+- The frontal hairline from above must be a smooth, rounded curve with no M-shape recession.
+- Natural growth direction: hair pointing forward at the front, clockwise whorl pattern at the crown.
+- Keep the exact same hair color and texture.
 
-Output one photorealistic top-view photo.`,
+Output one photorealistic top-view photo showing a dramatic transformation.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -165,21 +166,21 @@ Output one photorealistic top-view photo.`,
 // ---------------------------------------------------------------------------
 
 const COMBINED_PROMPT: Record<SimulationAngle, string> = {
-  frontal: `Image 1 shows a real hair transplant before/after (left=before, right=after). Image 2 is my patient's frontal photo.
+  frontal: `Image 1 shows a real hair transplant before/after (left=before, right=after). Image 2 is my patient.
 
-Generate a photorealistic photo of the patient (Image 2) showing what they would look like after the same type of hair transplant shown in Image 1. Hair must grow on the bare forehead skin, both temple corners must be filled with thick hair, dense coverage everywhere, no scalp visible. Same face, same person, same hair color and length. Output one frontal photo.`,
+Generate a photorealistic photo of the patient (Image 2) after the SAME dramatic transformation shown in Image 1. The hairline must move VERY far down — only 2-3 finger widths above the eyebrows. Both temple corners completely filled. Dense hair everywhere, zero scalp visible. Same face, same person, same hair color and length. Output one frontal photo.`,
 
-  lateral_left: `Image 1 shows a real hair transplant before/after from the left side (left=before, right=after). Image 2 is my patient's left side photo.
+  lateral_left: `Image 1 shows a real hair transplant before/after from the left side. Image 2 is my patient's left side.
 
-Generate a photorealistic photo of the patient (Image 2) after the same transformation. The bare temple area must be completely filled with hair, smooth hairline from forehead to ear, full density. Same face, pose, background, hair color. Output one left-side photo.`,
+Generate a photorealistic photo of the patient after the SAME dramatic transformation. The entire temple triangle must be filled with thick hair. The hairline must start much further forward. Smooth continuous hair silhouette from forehead to ear. Same face, pose, background. Output one left-side photo.`,
 
-  lateral_right: `Image 1 shows a real hair transplant before/after from the left side. Image 2 is my patient's right side photo.
+  lateral_right: `Image 1 shows a real hair transplant before/after. Image 2 is my patient's right side.
 
-Generate a photorealistic photo of the patient (Image 2) after the same transformation mirrored to the right side. The bare temple area must be completely filled with hair, smooth hairline from forehead to ear, full density. Same face, pose, background, hair color. Output one right-side photo.`,
+Generate a photorealistic photo of the patient after the SAME dramatic transformation mirrored to right side. The entire temple triangle must be filled with thick hair. The hairline must start much further forward. Smooth continuous hair silhouette from forehead to ear. Same face, pose, background. Output one right-side photo.`,
 
-  top: `Image 1 shows a real hair transplant before/after from above (left=before, right=after). Image 2 is my patient's top-of-head photo.
+  top: `Image 1 shows a real hair transplant before/after from above. Image 2 is my patient's head from above.
 
-Generate a photorealistic photo of the patient's head (Image 2) after the same transformation. Complete scalp coverage, no bare skin visible, hairline further forward, natural growth direction. Same hair color and texture. Output one top-view photo.`,
+Generate a photorealistic photo of the patient's head after the SAME dramatic transformation. The hairline must extend at least 3-4cm further forward. Complete scalp coverage, zero bare skin. Natural growth direction. Same hair color. Output one top-view photo.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -187,21 +188,37 @@ Generate a photorealistic photo of the patient's head (Image 2) after the same t
 // ---------------------------------------------------------------------------
 
 const GENERATION_PROMPT: Record<SimulationAngle, string> = {
-  frontal: `Look at this person's face carefully. Now generate a photorealistic photo of this EXACT same person, but imagine they have a full head of thick, dense hair.
+  frontal: `Look at this person's face. Now generate a photorealistic photo of this EXACT same person, but imagine they just had a hair transplant and now have a full head of thick, dense hair.
 
-Their hairline must sit low on the forehead (forehead is only 1/3 of face height). Both temple corners are covered with hair. Thick dense hair everywhere, no scalp visible. Same face, skin, expression, beard, clothing, background. Same hair color and texture, just much more hair growing where there was bare skin before.`,
+The transformation must be DRAMATIC and obvious:
+- The hairline sits VERY LOW — only 2-3 finger widths above the eyebrows. The forehead is visibly much smaller.
+- Both temple corners are fully covered with hair — the "M" recession is completely gone.
+- Thick dense hair everywhere, zero scalp visible.
+- Same face, skin, expression, beard, clothing, background. Same hair color and texture, same short hair length — just dramatically more coverage where there was bare skin.`,
 
-  lateral_left: `Look at this person's left side profile. Generate a photorealistic photo of this EXACT same person, but with a full head of thick, dense hair.
+  lateral_left: `Look at this person's left profile. Generate a photorealistic photo of this EXACT same person, but with a full head of thick, dense hair after a hair transplant.
 
-The temple area between forehead and ear must be completely covered with hair flowing to the sideburn. Smooth hairline silhouette from forehead to behind the ear. Same face, pose, background, hair color and texture.`,
+The transformation must be DRAMATIC:
+- The entire temple area (bare skin between top of head and ear) is fully covered with thick hair.
+- The hairline starts much further FORWARD — the forehead profile is visibly shorter.
+- Smooth continuous hair silhouette from forehead to behind the ear, zero gaps.
+- Same face, pose, background, hair color and texture.`,
 
-  lateral_right: `Look at this person's right side profile. Generate a photorealistic photo of this EXACT same person, but with a full head of thick, dense hair.
+  lateral_right: `Look at this person's right profile. Generate a photorealistic photo of this EXACT same person, but with a full head of thick, dense hair after a hair transplant.
 
-The temple area between forehead and ear must be completely covered with hair flowing to the sideburn. Smooth hairline silhouette from forehead to behind the ear. Same face, pose, background, hair color and texture.`,
+The transformation must be DRAMATIC:
+- The entire temple area (bare skin between top of head and ear) is fully covered with thick hair.
+- The hairline starts much further FORWARD — the forehead profile is visibly shorter.
+- Smooth continuous hair silhouette from forehead to behind the ear, zero gaps.
+- Same face, pose, background, hair color and texture.`,
 
-  top: `Look at this person's head from above. Generate a photorealistic photo of this EXACT same head from above, but with complete hair coverage.
+  top: `Look at this person's head from above. Generate a photorealistic photo of this EXACT same head from above, but after a hair transplant with complete, thick hair coverage.
 
-Every spot where scalp skin is visible must be covered with dense hair. The hairline extends further forward. Natural growth direction: forward at front, clockwise whorl at crown. Same hair color and texture, just full coverage.`,
+The transformation must be DRAMATIC:
+- The hairline extends at least 3-4cm further forward than the current state. The bare forehead area visible from above is dramatically reduced.
+- Every spot where scalp skin is currently visible must be covered with thick, dense hair.
+- Smooth rounded frontal hairline from above — zero M-shape recession.
+- Natural growth direction: forward at front, clockwise whorl at crown. Same hair color and texture.`,
 };
 
 // ---------------------------------------------------------------------------

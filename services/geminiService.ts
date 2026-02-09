@@ -2,6 +2,46 @@
 import { GoogleGenAI } from "@google/genai";
 import type { SimulationAngle } from "../types";
 
+// Reutiliza a instância da API (evita criar uma nova para cada chamada)
+let _aiInstance: InstanceType<typeof GoogleGenAI> | null = null;
+const getAI = (): InstanceType<typeof GoogleGenAI> => {
+  if (!_aiInstance) {
+    _aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+  }
+  return _aiInstance;
+};
+
+/**
+ * Comprime imagem para reduzir payload enviado à API.
+ * Reduz para max 1024px no maior lado e qualidade JPEG 0.8.
+ * Isso reduz drasticamente o tamanho dos tokens de input (~70% menor).
+ */
+const compressImage = (base64DataUrl: string, maxSize = 1024, quality = 0.8): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+
+      if (width > maxSize || height > maxSize) {
+        const ratio = Math.min(maxSize / width, maxSize / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressed = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(base64DataUrl); // fallback: usa original
+    img.src = base64DataUrl;
+  });
+};
+
 const BASE_FUE_PROMPT = `
 You are a world-class photorealistic hair transplant simulation engine trained on thousands of real FUE (Follicular Unit Extraction) before-and-after clinical photographs.
 
@@ -41,7 +81,6 @@ CROWN/VERTEX RESTORATION:
 - Grafts are placed starting from the whorl center, working outward in a spiral
 - Crown graft angles: 20-25 degrees relative to the scalp surface
 - Cross-hatching technique: some hairs grow TOWARD each other to create density illusion with fewer grafts
-- Crown requires 14-18 months for full thickness, but at 12 months shows significant coverage
 - The bald spot in the crown should be COVERED or dramatically reduced
 
 HAIR CHARACTERISTICS:
@@ -87,35 +126,45 @@ OUTPUT: One single photorealistic frontal photograph. The hair transformation mu
 `,
 
   lateral_left: `
-=== OUTPUT: LEFT LATERAL VIEW ===
+=== OUTPUT: LEFT SIDE PROFILE ===
 
-Generate a LEFT SIDE PROFILE photograph (person's left side facing the camera, ear and jawline visible, approximately 80-90 degree angle).
+IMPORTANT — THIS IS THE PERSON'S LEFT SIDE. The output image must show:
+- The person is FACING TO THEIR RIGHT (the camera sees their LEFT cheek, LEFT ear, LEFT jawline)
+- The person's LEFT EAR must be visible
+- The person's NOSE points to the RIGHT side of the image frame
+- Think of it as: if you are standing face-to-face with the person Andthen step to YOUR right, you would see THEIR left side
+
+This is NOT the right side. Do NOT generate a right profile. The LEFT ear, LEFT cheek, LEFT temple must be shown.
 
 WHAT MUST CHANGE IN THIS VIEW:
-1. LEFT TEMPLE: The left temporal recession ("entrada esquerda") is COMPLETELY ELIMINATED. Where the input shows a receding temple with visible scalp, the output shows hair covering the entire temporal area with a defined, sharp temple point.
-2. LATERAL HAIRLINE: The contour from the center of the forehead curving back to the left ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
-3. TEMPLE POINT: The angular point where the hairline transitions toward the sideburn area is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
-4. SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the natural sideburn area — no harsh transition line.
-5. HAIR ABOVE EAR: The parietal area above and behind the ear shows natural density with hair flowing downward and slightly backward.
-6. TOP VISIBLE FROM SIDE: If the top of the head is visible from this angle, it should also show increased density.
+1. LEFT TEMPLE: The left temporal recession ("entrada esquerda") is COMPLETELY ELIMINATED. Hair covers the entire left temporal area with a defined, sharp temple point.
+2. LEFT LATERAL HAIRLINE: The contour from the center of the forehead curving back to the LEFT ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
+3. LEFT TEMPLE POINT: The angular point where the hairline transitions toward the left sideburn is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
+4. LEFT SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the left sideburn area.
+5. HAIR ABOVE LEFT EAR: Natural density with hair flowing downward and slightly backward.
 
-OUTPUT: One single photorealistic left side profile photograph. Temple recession on the left side must be completely corrected.
+OUTPUT: One single photorealistic LEFT side profile photograph showing the person's LEFT side with the LEFT ear visible. Temple recession on the LEFT side must be completely corrected.
 `,
 
   lateral_right: `
-=== OUTPUT: RIGHT LATERAL VIEW ===
+=== OUTPUT: RIGHT SIDE PROFILE ===
 
-Generate a RIGHT SIDE PROFILE photograph (person's right side facing the camera, ear and jawline visible, approximately 80-90 degree angle).
+IMPORTANT — THIS IS THE PERSON'S RIGHT SIDE. The output image must show:
+- The person is FACING TO THEIR LEFT (the camera sees their RIGHT cheek, RIGHT ear, RIGHT jawline)
+- The person's RIGHT EAR must be visible
+- The person's NOSE points to the LEFT side of the image frame
+- Think of it as: if you are standing face-to-face with the person and then step to YOUR left, you would see THEIR right side
+
+This is NOT the left side. Do NOT generate a left profile. The RIGHT ear, RIGHT cheek, RIGHT temple must be shown.
 
 WHAT MUST CHANGE IN THIS VIEW:
-1. RIGHT TEMPLE: The right temporal recession ("entrada direita") is COMPLETELY ELIMINATED. Where the input shows a receding temple with visible scalp, the output shows hair covering the entire temporal area with a defined, sharp temple point.
-2. LATERAL HAIRLINE: The contour from the center of the forehead curving back to the right ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
-3. TEMPLE POINT: The angular point where the hairline transitions toward the sideburn area is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
-4. SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the natural sideburn area — no harsh transition line.
-5. HAIR ABOVE EAR: The parietal area above and behind the ear shows natural density with hair flowing downward and slightly backward.
-6. TOP VISIBLE FROM SIDE: If the top of the head is visible from this angle, it should also show increased density.
+1. RIGHT TEMPLE: The right temporal recession ("entrada direita") is COMPLETELY ELIMINATED. Hair covers the entire right temporal area with a defined, sharp temple point.
+2. RIGHT LATERAL HAIRLINE: The contour from the center of the forehead curving back to the RIGHT ear shows a smooth, natural line of hair — no gaps, no thin patches, no visible recession.
+3. RIGHT TEMPLE POINT: The angular point where the hairline transitions toward the right sideburn is SHARP and DEFINED, with hair growing at acute downward angles toward the face.
+4. RIGHT SIDEBURN INTEGRATION: Transplanted temple hair blends seamlessly into the right sideburn area.
+5. HAIR ABOVE RIGHT EAR: Natural density with hair flowing downward and slightly backward.
 
-OUTPUT: One single photorealistic right side profile photograph. Temple recession on the right side must be completely corrected.
+OUTPUT: One single photorealistic RIGHT side profile photograph showing the person's RIGHT side with the RIGHT ear visible. Temple recession on the RIGHT side must be completely corrected.
 `,
 
   top: `
@@ -128,21 +177,41 @@ WHAT MUST CHANGE IN THIS VIEW:
 2. MID-SCALP: The entire area between the frontal zone and crown shows CONSISTENT, EVEN density with no thin patches or visible scalp skin.
 3. FRONTAL ZONE FROM ABOVE: If the front of the head is visible, the reconstructed hairline and filled temporal areas should be visible from this elevated angle.
 4. HAIR PART: If the person has a natural part line, it should remain visible and natural-looking, with dense hair on both sides.
-5. OVERALL DENSITY: From above, the scalp should NOT be visible through the hair in transplanted areas. The coverage should look like a person with naturally good hair density (~35-45 FU/cm² throughout).
+5. OVERALL DENSITY: From above, the scalp should NOT be visible through the hair in transplanted areas (~35-45 FU/cm² throughout).
 6. WHORL DETAIL: The crown whorl must look natural — hair radiating in a spiral from the center, with cross-hatched graft placement creating the illusion of density.
 
 OUTPUT: One single photorealistic top-down or elevated-angle photograph. Previously bald or thinning areas on the crown and mid-scalp must show full hair coverage.
 `,
 };
 
+/**
+ * Prepara as imagens comprimidas e convertidas em parts para a API.
+ * Cache para evitar recomprimir as mesmas imagens em chamadas paralelas.
+ */
+let _cachedImageParts: { key: string; parts: Array<{ inlineData: { data: string; mimeType: string } }> } | null = null;
+
+const prepareImageParts = async (base64Images: string[]): Promise<Array<{ inlineData: { data: string; mimeType: string } }>> => {
+  const cacheKey = base64Images.map(img => img.slice(-50)).join('|');
+
+  if (_cachedImageParts && _cachedImageParts.key === cacheKey) {
+    return _cachedImageParts.parts;
+  }
+
+  const compressed = await Promise.all(base64Images.map(img => compressImage(img)));
+  const parts = compressed.map(img => ({
+    inlineData: { data: img.split(',')[1], mimeType: 'image/jpeg' }
+  }));
+
+  _cachedImageParts = { key: cacheKey, parts };
+  return parts;
+};
+
 export const restoreHairForAngle = async (
   base64Images: string[],
   angle: SimulationAngle
 ): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const imageParts = base64Images.map(img => ({
-    inlineData: { data: img.split(',')[1], mimeType: 'image/jpeg' }
-  }));
+  const ai = getAI();
+  const imageParts = await prepareImageParts(base64Images);
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -167,6 +236,9 @@ export const restoreHairAllAngles = async (
   onResult: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
 ): Promise<void> => {
   const angles: SimulationAngle[] = ['frontal', 'lateral_left', 'lateral_right', 'top'];
+
+  // Pré-comprime as imagens uma única vez antes de disparar as 4 chamadas paralelas
+  await prepareImageParts(base64Images);
 
   const promises = angles.map(async (angle) => {
     try {

@@ -2,11 +2,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { SimulationAngle } from "../types";
 
-// Importa as imagens de referência before/after (Vite resolve como URL)
-import refFrontUrl from '../assets/reference/fue-front-before-after.jpg';
-import refLeftUrl from '../assets/reference/fue-left-before-after.jpg';
-import refTopUrl from '../assets/reference/fue-top-before-after.jpg';
-
 // Reutiliza a instância da API (evita criar uma nova para cada chamada)
 let _aiInstance: InstanceType<typeof GoogleGenAI> | null = null;
 const getAI = (): InstanceType<typeof GoogleGenAI> => {
@@ -47,121 +42,77 @@ const compressImage = (base64DataUrl: string, maxSize = 1024, quality = 0.8): Pr
   });
 };
 
-/**
- * Carrega uma imagem de URL e converte para base64 data URL.
- * Usado para carregar as imagens de referência antes/depois.
- */
-const loadImageAsBase64 = (url: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      // Comprimir para max 800px para economizar tokens
-      let { width, height } = img;
-      const maxSize = 800;
-      if (width > maxSize || height > maxSize) {
-        const ratio = Math.min(maxSize / width, maxSize / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.75));
-    };
-    img.onerror = () => reject(new Error(`Failed to load reference image: ${url}`));
-    img.src = url;
-  });
-};
-
-// Cache das imagens de referência já convertidas para base64
-let _refImageCache: Record<string, string> | null = null;
-
-const getRefImageBase64 = async (angle: SimulationAngle): Promise<string> => {
-  if (!_refImageCache) {
-    // Carrega todas de uma vez (são só 3 imagens pequenas)
-    const [front, left, top] = await Promise.all([
-      loadImageAsBase64(refFrontUrl),
-      loadImageAsBase64(refLeftUrl),
-      loadImageAsBase64(refTopUrl),
-    ]);
-    _refImageCache = { front, left, top };
-  }
-
-  // Mapeia ângulo para imagem de referência
-  switch (angle) {
-    case 'frontal': return _refImageCache.front;
-    case 'lateral_left': return _refImageCache.left;
-    case 'lateral_right': return _refImageCache.left; // mesma ref (espelhada mentalmente)
-    case 'top': return _refImageCache.top;
-  }
-};
-
 const BASE_FUE_PROMPT = `
 You are a photorealistic image editor specializing in hair transplant simulations.
 
-REFERENCE IMAGE: The first image below is a REAL before/after photo from a clinical FUE hair transplant (left = before, right = after, 3000 grafts, 13 months post-op). Study the TRANSFORMATION carefully — notice how:
-- The hairline moved MUCH lower on the forehead
-- The temple triangles are completely filled with hair
-- The overall density increased dramatically
-- The hair length/style stayed the same — only density and coverage changed
+INPUT: Multiple photos of the SAME person from different angles showing hair loss (receding hairline, temple recession, thinning).
 
-YOUR TASK: Apply the SAME TYPE OF TRANSFORMATION to the patient in the remaining photos. The patient's photos show them from a specific angle with hair loss. Produce a single photo showing what they would look like after a similar FUE transplant.
+YOUR TASK: Edit the photo to show this person with a FULL HEAD OF HAIR — as if they received a 3500-graft FUE transplant 12 months ago. The result must be a DRAMATIC transformation.
 
-THE TRANSFORMATION MUST BE AS DRAMATIC as the reference before/after. If your output looks similar to the patient's input, you have failed.
+=== THE 3 CHANGES YOU MUST MAKE ===
 
-=== WHAT TO CHANGE ===
-1. HAIRLINE: Draw hair on the upper forehead — make the forehead visibly shorter (30-40% less forehead). Natural wavy hairline border.
-2. TEMPLES: Fill the bald V-shaped temple areas completely with hair.
-3. DENSITY: Cover all areas where scalp shows through thin hair.
+1. FILL THE FOREHEAD WITH HAIR — MAKE THE FOREHEAD MUCH SMALLER:
+The patient's forehead looks tall/large because hair has receded. You must draw/paint hair growing on the upper forehead skin so the forehead becomes visibly SHORTER. The hairline must start much lower — roughly 30-40% less forehead visible. The new hairline has a natural wavy shape (not straight). Keep the same hair length and style — just add coverage on the bald forehead area.
 
-=== WHAT TO KEEP ===
-- Face, skin, beard, expression — identical to the patient's photos
-- Hair length and style — same cut, just more coverage and density
+2. FILL THE TEMPLE TRIANGLES ("ENTRADAS"):
+The bald V-shaped areas at both temples must be completely covered with hair. Zero bare skin remaining at the temples. The hair at the temples angles downward toward the face.
+
+3. FILL ALL THIN/SPARSE AREAS:
+Wherever scalp skin is visible through thin hair, add enough hair density so the scalp is completely hidden. More hair strands growing from the roots — same length as existing hair.
+
+=== PRESERVE THESE (do not alter) ===
+- Face, skin, beard, expression, eyes, nose, ears — identical to input
+- Hair length and hairstyle — same cut, just more density and coverage
 - Background, lighting, clothing, photo quality
 `;
 
 const ANGLE_PROMPTS: Record<SimulationAngle, string> = {
   frontal: `
-OUTPUT: One FRONTAL photo (face looking at camera, same pose as the patient's input).
+OUTPUT: One FRONTAL photo (face looking at camera, same pose as input).
 
-Look at the REFERENCE before/after — see how the frontal hairline dropped dramatically and temples were filled. Apply the same transformation:
-1. Forehead MUCH SHORTER — hair growing on the previously bare upper forehead.
-2. Both temple triangles filled — zero bare skin.
-3. Full density — no scalp visible.
+KEY CHANGES for this angle:
+1. The forehead must be MUCH SHORTER — draw hair growing on the upper 30-40% of the currently bare forehead skin. This is the most important change. The hairline starts much lower, with a natural wavy border.
+2. Both temple triangles ("entradas") completely filled with hair — zero bare skin at the temples.
+3. All thin areas filled — no scalp visible through the hair.
+
+The face must remain identical. The hair length and style must remain the same — only add density and lower the hairline.
 `,
 
   lateral_left: `
 OUTPUT: One LEFT SIDE PROFILE photo.
 
-CAMERA: Shows LEFT cheek, LEFT ear, LEFT jawline. Nose points RIGHT.
+CAMERA: Shows LEFT cheek, LEFT ear, LEFT jawline. Nose points RIGHT. LEFT EAR visible, RIGHT ear NOT visible.
 
-Look at the REFERENCE before/after — see how the lateral temple gap was completely filled and the hairline advanced forward. Apply the same transformation:
-1. LEFT TEMPLE gap completely filled — smooth hair silhouette from forehead to ear.
-2. Hairline starts LOWER on the forehead from this angle.
-3. Full density — no scalp visible.
+KEY CHANGES for this angle:
+1. The bald/thin area at the LEFT TEMPLE (the concave gap between hairline and ear) must be completely filled with hair. The head silhouette from forehead to ear becomes a smooth continuous curve of hair — no bald dip.
+2. The hairline starts LOWER on the forehead — less forehead visible from this side than in the input.
+3. Hair has full density everywhere — no scalp visible.
+
+Keep the same hair length and style. Face identical to input.
 `,
 
   lateral_right: `
 OUTPUT: One RIGHT SIDE PROFILE photo.
 
-CAMERA: Shows RIGHT cheek, RIGHT ear, RIGHT jawline. Nose points LEFT.
+CAMERA: Shows RIGHT cheek, RIGHT ear, RIGHT jawline. Nose points LEFT. RIGHT EAR visible, LEFT ear NOT visible.
 
-Look at the REFERENCE before/after (it shows the left side — apply the MIRROR transformation to the right side):
-1. RIGHT TEMPLE gap completely filled — smooth hair silhouette from forehead to ear.
-2. Hairline starts LOWER on the forehead from this angle.
-3. Full density — no scalp visible.
+KEY CHANGES for this angle:
+1. The bald/thin area at the RIGHT TEMPLE (the concave gap between hairline and ear) must be completely filled with hair. The head silhouette from forehead to ear becomes a smooth continuous curve of hair — no bald dip.
+2. The hairline starts LOWER on the forehead — less forehead visible from this side than in the input.
+3. Hair has full density everywhere — no scalp visible.
+
+Keep the same hair length and style. Face identical to input.
 `,
 
   top: `
 OUTPUT: One TOP-DOWN photo (looking down at the top of the head).
 
-Look at the REFERENCE before/after — see how the top view went from visible scalp/thin hair to complete dense coverage. Apply the same transformation:
-1. COMPLETE scalp coverage — zero skin visible through the hair from above.
-2. Hair starts FURTHER FORWARD on the head (lower hairline visible from top).
-3. Natural direction: forward in front, back-to-front on mid-scalp, whorl at crown.
+KEY CHANGES for this angle:
+1. Every spot where scalp skin shows through thin hair must be filled with dense hair. Looking down at the head, you should see ONLY hair — zero scalp skin visible anywhere. Add more hair strands at the roots (same length, more density).
+2. The front edge of the hair starts FURTHER FORWARD on the head — hair covers more of the forehead area.
+3. Natural hair direction: flows forward in front, front-to-back on mid-scalp, whorl pattern at crown.
+
+Keep the same hair length. The change is DENSITY, not length.
 `,
 };
 
@@ -194,21 +145,11 @@ export const restoreHairForAngle = async (
   const ai = getAI();
   const imageParts = await prepareImageParts(base64Images);
 
-  // Carrega a imagem de referência before/after para este ângulo
-  const refBase64 = await getRefImageBase64(angle);
-  const refPart = {
-    inlineData: { data: refBase64.split(',')[1], mimeType: 'image/jpeg' }
-  };
-
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
       parts: [
-        // Primeiro: imagem de referência before/after
-        refPart,
-        // Depois: fotos do paciente
         ...imageParts,
-        // Por último: o prompt
         { text: BASE_FUE_PROMPT + ANGLE_PROMPTS[angle] }
       ]
     }
@@ -228,11 +169,8 @@ export const restoreHairAllAngles = async (
 ): Promise<void> => {
   const angles: SimulationAngle[] = ['frontal', 'lateral_left', 'lateral_right', 'top'];
 
-  // Pré-carrega imagens de referência e comprime fotos do paciente em paralelo
-  await Promise.all([
-    prepareImageParts(base64Images),
-    getRefImageBase64('frontal'), // isso carrega e cacheia todas
-  ]);
+  // Pré-comprime as imagens uma única vez antes de disparar as 4 chamadas paralelas
+  await prepareImageParts(base64Images);
 
   const promises = angles.map(async (angle) => {
     try {

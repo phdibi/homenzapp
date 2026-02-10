@@ -1,40 +1,35 @@
 /**
- * Hair Transplant Simulation Service
+ * Hair Transplant Simulation Service — v3 (Nano Banana Pro)
  *
- * Uses FLUX Kontext Pro via fal.ai for image editing.
- * Chosen after comparative testing: best balance of hairline transformation
- * + facial identity preservation + hair color preservation.
+ * Uses Google Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
+ * The user draws a green mask on their photo indicating WHERE to add hair.
+ * We send the original photo + annotated composite to the model.
  *
- * Keeps the same public API (restoreHairForAngle, restoreHairAllAngles)
- * so HairRestore.tsx doesn't need changes.
+ * Public API:
+ *   - simulateForAngle(photo, mask, composite, angle) → dataUrl
+ *   - simulateAllAngles(photos, masks, composites, onResult) → void
  */
 
-import { fal } from "@fal-ai/client";
-import type { SimulationAngle, AngleImageMap } from "../types";
+import { GoogleGenAI } from "@google/genai";
+import type { SimulationAngle, AngleImageMap, AngleMaskMap } from "../types";
 
 // ---------------------------------------------------------------------------
-// fal.ai configuration
+// Gemini configuration
 // ---------------------------------------------------------------------------
 
-// Use proxy in production (Vercel serverless function keeps FAL_KEY secret)
-// In dev, fall back to direct credentials if proxy isn't available
-const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
 
-if (isLocalDev && process.env.FAL_KEY) {
-  // Dev mode: use key directly (acceptable for local development)
-  fal.config({ credentials: process.env.FAL_KEY });
-  console.log("[SimulationService] Using direct FAL_KEY (dev mode)");
-} else {
-  // Production: proxy through Vercel serverless function
-  fal.config({ proxyUrl: "/api/fal/proxy" });
-  console.log("[SimulationService] Using proxy /api/fal/proxy (production mode)");
+if (!GEMINI_API_KEY) {
+  console.warn("[SimulationService] No GEMINI_API_KEY found — API calls will fail");
 }
 
-// Model endpoint
-const FLUX_MODEL = "fal-ai/flux-pro/kontext";
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+// Nano Banana Pro = Gemini 3 Pro Image
+const MODEL_ID = "gemini-3-pro-image-preview";
 
 // ---------------------------------------------------------------------------
-// Image compression (reused from original — keeps images under fal.ai limits)
+// Image compression — keep images under API limits
 // ---------------------------------------------------------------------------
 
 const compressImage = (
@@ -63,122 +58,151 @@ const compressImage = (
   });
 };
 
-// ---------------------------------------------------------------------------
-// Prompts per angle — R3 winners (tested 2024-02-10)
-// Key improvements over R2: explicit hair color preservation, beard protection,
-// more aggressive language for lateral_right and top angles
-// ---------------------------------------------------------------------------
-
-const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Add much more hair to this person. The hairline must come down VERY LOW — almost touching the eyebrows, with only a small forehead visible. Fill both temple corners completely with thick hair — the M-shape recession must be completely gone. Thick dense coverage everywhere on top, zero scalp visible. IMPORTANT: keep the EXACT same light brown/dirty blonde hair color — do not darken it. Keep the same beard style and color unchanged. Same face, same skin, same everything else.`,
-
-  lateral_left: `Add much more hair to this person's left side. Fill the entire temple triangle area with thick hair — zero bare skin visible between the hairline and ear. The hairline must start much further forward. Hair color must stay the exact same light brown/dirty blonde — do not darken it. Do not change the beard or face at all.`,
-
-  lateral_right: `This person needs MUCH more hair on the right side of their head. The temple area is currently bare — FILL IT COMPLETELY with thick dense hair matching their existing light brown hair color. The hairline must extend far forward, dramatically reducing the visible forehead from this angle. Cover ALL bare scalp skin above the ear with hair. Do not change the beard, face, or skin at all.`,
-
-  top: `Add MUCH more hair to cover this person's head from above. Fill ALL thin spots and bald areas with thick, dense hair. The hairline must extend much further forward than it currently does. Every gap where scalp skin shows through must be completely covered. The hair must stay the exact same light brown/dirty blonde color. This is a dramatic improvement — the ENTIRE top of the head should be covered in thick hair with zero scalp visible.`,
+/** Strip data URL prefix and return { mimeType, data } */
+const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
+  const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+  if (!match) {
+    return { mimeType: "image/jpeg", data: dataUrl };
+  }
+  return { mimeType: match[1], data: match[2] };
 };
 
 // ---------------------------------------------------------------------------
-// Core: call FLUX Kontext Pro via fal.ai
+// Prompt — single, mask-aware prompt for all angles
 // ---------------------------------------------------------------------------
 
-const callFluxKontext = async (
-  imageDataUrl: string,
-  prompt: string
-): Promise<string> => {
-  console.log(`[FLUX] Calling ${FLUX_MODEL}...`);
-  const start = Date.now();
+const buildPrompt = (angle: SimulationAngle): string => {
+  const angleContext: Record<SimulationAngle, string> = {
+    frontal: "frontal view of the patient's face",
+    lateral_left: "left side profile of the patient's head",
+    lateral_right: "right side profile of the patient's head",
+    top: "top-down view of the patient's scalp",
+  };
 
-  let result: any;
-  try {
-    result = await fal.subscribe(FLUX_MODEL, {
-      input: {
-        prompt,
-        image_url: imageDataUrl,
-      },
-      logs: true,
-      onQueueUpdate: (update: any) => {
-        if (update.status === "IN_PROGRESS") {
-          update.logs
-            ?.map((log: any) => log.message)
-            .forEach((m: string) => console.log(`[FLUX] ${m}`));
-        }
-      },
-    });
-  } catch (err: any) {
-    console.error("[FLUX] API call failed:", err);
-    const msg = err?.message || err?.body?.detail || String(err);
-    throw new Error(`fal.ai erro: ${msg}`);
-  }
+  return `You are a professional hair transplant simulation specialist.
 
-  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+I'm sending you TWO images:
+1. FIRST IMAGE: The original clean photo of the patient (${angleContext[angle]})
+2. SECOND IMAGE: The SAME photo with GREEN painted areas showing exactly WHERE new hair should be added
 
-  // fal.ai returns images at result.images or result.data.images
-  const images = result?.images || result?.data?.images;
-  if (!images?.[0]?.url) {
-    console.error("[FLUX] No image in response:", JSON.stringify(result).slice(0, 500));
-    throw new Error("FLUX não retornou imagem");
-  }
+YOUR TASK: Edit the FIRST (clean) image and add realistic, natural-looking hair ONLY in the areas that are painted green in the second image.
 
-  console.log(`[FLUX] Done in ${elapsed}s — downloading result...`);
-
-  // Download the image and convert to data URL for display
-  const imageUrl = images[0].url;
-  const response = await fetch(imageUrl);
-  if (!response.ok) {
-    throw new Error(`Erro ao baixar imagem: ${response.status}`);
-  }
-  const blob = await response.blob();
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Erro ao converter imagem"));
-    reader.readAsDataURL(blob);
-  });
+RULES:
+- Add dense, natural follicular units matching the patient's existing hair color, texture, and direction
+- The green areas are your ONLY guide — add hair THERE and nowhere else
+- Keep hair the SAME LENGTH as existing hair — just add density and coverage
+- Preserve the patient's face, skin, beard, ears, and everything else EXACTLY
+- The result must look like a real photo, not digitally altered
+- No blurring, no plastic look, no artifacts`;
 };
 
 // ---------------------------------------------------------------------------
-// Public API (same interface as before — HairRestore.tsx needs zero changes)
+// Core: call Nano Banana Pro
 // ---------------------------------------------------------------------------
 
-export const restoreHairForAngle = async (
-  angleImages: AngleImageMap,
+const callNanoBananaPro = async (
+  cleanPhoto: string,
+  compositeGuide: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  const imageData = angleImages[angle];
-  if (!imageData) throw new Error(`Sem imagem para o ângulo: ${angle}`);
+  console.log(`[NanaBananaPro] Processing ${angle}...`);
+  const start = Date.now();
 
-  // Compress before sending
-  const compressed = await compressImage(imageData);
-  const prompt = PROMPTS[angle];
+  const cleanParsed = parseDataUrl(cleanPhoto);
+  const guideParsed = parseDataUrl(compositeGuide);
 
-  console.log(`[${angle}] Processando com FLUX Kontext Pro...`);
-  return await callFluxKontext(compressed, prompt);
+  const prompt = buildPrompt(angle);
+
+  const response = await ai.models.generateContent({
+    model: MODEL_ID,
+    contents: [
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType: cleanParsed.mimeType,
+          data: cleanParsed.data,
+        },
+      },
+      {
+        inlineData: {
+          mimeType: guideParsed.mimeType,
+          data: guideParsed.data,
+        },
+      },
+    ],
+    config: {
+      responseModalities: ["TEXT", "IMAGE"],
+    },
+  });
+
+  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+  console.log(`[NanaBananaPro] ${angle} completed in ${elapsed}s`);
+
+  // Extract image from response
+  const parts = response?.candidates?.[0]?.content?.parts;
+  if (!parts) {
+    throw new Error("Resposta vazia do modelo");
+  }
+
+  for (const part of parts) {
+    if ((part as any).inlineData) {
+      const inlineData = (part as any).inlineData;
+      return `data:${inlineData.mimeType || "image/png"};base64,${inlineData.data}`;
+    }
+  }
+
+  // If we got text but no image, log it
+  for (const part of parts) {
+    if ((part as any).text) {
+      console.warn(`[NanaBananaPro] Model returned text instead of image:`, (part as any).text);
+    }
+  }
+
+  throw new Error("Modelo nao retornou imagem — tente novamente");
 };
 
-export const restoreHairAllAngles = async (
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export const simulateForAngle = async (
   angleImages: AngleImageMap,
+  angleMasks: AngleMaskMap,
+  composites: Record<SimulationAngle, string | null>,
+  angle: SimulationAngle
+): Promise<string> => {
+  const photo = angleImages[angle];
+  const composite = composites[angle];
+
+  if (!photo) throw new Error(`Sem foto para o angulo: ${angle}`);
+  if (!composite) throw new Error(`Sem mascara desenhada para o angulo: ${angle}`);
+
+  const compressedPhoto = await compressImage(photo);
+  const compressedComposite = await compressImage(composite);
+
+  return await callNanoBananaPro(compressedPhoto, compressedComposite, angle);
+};
+
+export const simulateAllAngles = async (
+  angleImages: AngleImageMap,
+  angleMasks: AngleMaskMap,
+  composites: Record<SimulationAngle, string | null>,
   onResult: (
     angle: SimulationAngle,
     result: { image?: string; error?: string }
   ) => void
 ): Promise<void> => {
-  const angles: SimulationAngle[] = [
-    "frontal",
-    "lateral_left",
-    "lateral_right",
-    "top",
-  ];
+  const angles: SimulationAngle[] = ["frontal", "lateral_left", "lateral_right", "top"];
 
-  // Only process angles that have an image
-  const activeAngles = angles.filter((a) => angleImages[a] !== null);
+  // Only process angles that have BOTH photo AND mask
+  const activeAngles = angles.filter(
+    (a) => angleImages[a] !== null && composites[a] !== null
+  );
 
   // Sequential to avoid rate limiting
   for (const angle of activeAngles) {
     try {
-      const image = await restoreHairForAngle(angleImages, angle);
+      const image = await simulateForAngle(angleImages, angleMasks, composites, angle);
       onResult(angle, { image });
     } catch (err: any) {
       console.error(`[${angle}] Erro:`, err);
@@ -186,3 +210,7 @@ export const restoreHairAllAngles = async (
     }
   }
 };
+
+// Legacy exports for backwards compat (if anything references them)
+export const restoreHairForAngle = simulateForAngle;
+export const restoreHairAllAngles = simulateAllAngles;

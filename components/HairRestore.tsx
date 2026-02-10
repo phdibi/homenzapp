@@ -211,7 +211,7 @@ const HairRestore: React.FC = () => {
                           <p className="text-[#1D4998] font-black text-xs uppercase tracking-widest animate-pulse">
                             Gerando {result.label}...
                           </p>
-                          <p className="text-gray-400 text-[10px]">Analisando referência e gerando simulação</p>
+                          <p className="text-gray-400 text-[10px]">Gerando simulação com IA (~15s)</p>
                         </div>
                       )}
 

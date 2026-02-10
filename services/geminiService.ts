@@ -64,22 +64,19 @@ const compressImage = (
 };
 
 // ---------------------------------------------------------------------------
-// Prompts per angle — based on R2-A (hybrid aggressive) winning prompt
-// Each adapted for its specific angle while keeping the same structure:
-//   1. Action-first (what to change)
-//   2. Aggressive hairline language
-//   3. Explicit "same hair color" to prevent darkening
-//   4. Short "same face, same everything" to preserve identity
+// Prompts per angle — R3 winners (tested 2024-02-10)
+// Key improvements over R2: explicit hair color preservation, beard protection,
+// more aggressive language for lateral_right and top angles
 // ---------------------------------------------------------------------------
 
 const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Add much more hair to this person. The hairline must come down VERY LOW — almost touching the eyebrows, with only a small forehead visible. Fill both temple corners completely with thick hair — the M-shape recession must be completely gone. Thick dense coverage everywhere on top, zero scalp visible. Keep the same hair color, same face, same beard, same everything else.`,
+  frontal: `Add much more hair to this person. The hairline must come down VERY LOW — almost touching the eyebrows, with only a small forehead visible. Fill both temple corners completely with thick hair — the M-shape recession must be completely gone. Thick dense coverage everywhere on top, zero scalp visible. IMPORTANT: keep the EXACT same light brown/dirty blonde hair color — do not darken it. Keep the same beard style and color unchanged. Same face, same skin, same everything else.`,
 
-  lateral_left: `Add much more hair to this person's left side view. The temple area must be COMPLETELY filled with thick hair — zero bare skin between the top of the head and the ear. The hairline must start much further forward on the forehead, making the forehead profile visibly shorter. Smooth continuous hair silhouette from forehead to behind the ear. Keep the same hair color, same face, same everything else.`,
+  lateral_left: `Add much more hair to this person's left side. Fill the entire temple triangle area with thick hair — zero bare skin visible between the hairline and ear. The hairline must start much further forward. Hair color must stay the exact same light brown/dirty blonde — do not darken it. Do not change the beard or face at all.`,
 
-  lateral_right: `Add much more hair to this person's right side view. The temple area must be COMPLETELY filled with thick hair — zero bare skin between the top of the head and the ear. The hairline must start much further forward on the forehead, making the forehead profile visibly shorter. Smooth continuous hair silhouette from forehead to behind the ear. Keep the same hair color, same face, same everything else.`,
+  lateral_right: `This person needs MUCH more hair on the right side of their head. The temple area is currently bare — FILL IT COMPLETELY with thick dense hair matching their existing light brown hair color. The hairline must extend far forward, dramatically reducing the visible forehead from this angle. Cover ALL bare scalp skin above the ear with hair. Do not change the beard, face, or skin at all.`,
 
-  top: `Add much more hair to this person's head seen from above. The hairline must extend MUCH further forward — the bare forehead area visible from above must shrink dramatically. Every spot where scalp skin shows through must be covered with thick, dense hair. Smooth rounded frontal hairline from above with no M-shape recession. Keep the same hair color, same everything else.`,
+  top: `Add MUCH more hair to cover this person's head from above. Fill ALL thin spots and bald areas with thick, dense hair. The hairline must extend much further forward than it currently does. Every gap where scalp skin shows through must be completely covered. The hair must stay the exact same light brown/dirty blonde color. This is a dramatic improvement — the ENTIRE top of the head should be covered in thick hair with zero scalp visible.`,
 };
 
 // ---------------------------------------------------------------------------

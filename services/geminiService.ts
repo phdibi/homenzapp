@@ -16,11 +16,19 @@ import type { SimulationAngle, AngleImageMap } from "../types";
 // fal.ai configuration
 // ---------------------------------------------------------------------------
 
-const FAL_KEY = process.env.FAL_KEY;
-if (!FAL_KEY) {
-  console.warn("[SimulationService] FAL_KEY not found — fal.ai calls will fail");
+// Use proxy in production (Vercel serverless function keeps FAL_KEY secret)
+// In dev, fall back to direct credentials if proxy isn't available
+const isLocalDev = typeof window !== "undefined" && window.location.hostname === "localhost";
+
+if (isLocalDev && process.env.FAL_KEY) {
+  // Dev mode: use key directly (acceptable for local development)
+  fal.config({ credentials: process.env.FAL_KEY });
+  console.log("[SimulationService] Using direct FAL_KEY (dev mode)");
+} else {
+  // Production: proxy through Vercel serverless function
+  fal.config({ proxyUrl: "/api/fal/proxy" });
+  console.log("[SimulationService] Using proxy /api/fal/proxy (production mode)");
 }
-fal.config({ credentials: FAL_KEY || "" });
 
 // Model endpoint
 const FLUX_MODEL = "fal-ai/flux-pro/kontext";
@@ -85,40 +93,51 @@ const callFluxKontext = async (
   console.log(`[FLUX] Calling ${FLUX_MODEL}...`);
   const start = Date.now();
 
-  const result = (await fal.subscribe(FLUX_MODEL, {
-    input: {
-      prompt,
-      image_url: imageDataUrl,
-    },
-    logs: true,
-    onQueueUpdate: (update: any) => {
-      if (update.status === "IN_PROGRESS") {
-        update.logs
-          ?.map((log: any) => log.message)
-          .forEach((m: string) => console.log(`[FLUX] ${m}`));
-      }
-    },
-  })) as any;
+  let result: any;
+  try {
+    result = await fal.subscribe(FLUX_MODEL, {
+      input: {
+        prompt,
+        image_url: imageDataUrl,
+      },
+      logs: true,
+      onQueueUpdate: (update: any) => {
+        if (update.status === "IN_PROGRESS") {
+          update.logs
+            ?.map((log: any) => log.message)
+            .forEach((m: string) => console.log(`[FLUX] ${m}`));
+        }
+      },
+    });
+  } catch (err: any) {
+    console.error("[FLUX] API call failed:", err);
+    const msg = err?.message || err?.body?.detail || String(err);
+    throw new Error(`fal.ai erro: ${msg}`);
+  }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
   // fal.ai returns images at result.images or result.data.images
   const images = result?.images || result?.data?.images;
   if (!images?.[0]?.url) {
-    throw new Error("FLUX returned no image");
+    console.error("[FLUX] No image in response:", JSON.stringify(result).slice(0, 500));
+    throw new Error("FLUX não retornou imagem");
   }
 
-  console.log(`[FLUX] Done in ${elapsed}s`);
+  console.log(`[FLUX] Done in ${elapsed}s — downloading result...`);
 
   // Download the image and convert to data URL for display
   const imageUrl = images[0].url;
   const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Erro ao baixar imagem: ${response.status}`);
+  }
   const blob = await response.blob();
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Erro ao converter imagem"));
     reader.readAsDataURL(blob);
   });
 };

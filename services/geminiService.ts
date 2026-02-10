@@ -1,17 +1,16 @@
 /**
- * Hair Transplant Simulation Service — v3 (Nano Banana Pro)
+ * Hair Transplant Simulation Service — v4 (Nano Banana Pro, prompt-only)
  *
- * Uses Google Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
- * The user draws a green mask on their photo indicating WHERE to add hair.
- * We send the original photo + annotated composite to the model.
+ * Uses Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
+ * No mask/drawing — the model receives a single photo + specialized prompt per angle.
  *
  * Public API:
- *   - simulateForAngle(photo, mask, composite, angle) → dataUrl
- *   - simulateAllAngles(photos, masks, composites, onResult) → void
+ *   - simulateForAngle(photos, angle) → dataUrl
+ *   - simulateAllAngles(photos, onResult) → void
  */
 
 import { GoogleGenAI } from "@google/genai";
-import type { SimulationAngle, AngleImageMap, AngleMaskMap } from "../types";
+import type { SimulationAngle, AngleImageMap } from "../types";
 
 // ---------------------------------------------------------------------------
 // Gemini configuration
@@ -25,11 +24,10 @@ if (!GEMINI_API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-// Nano Banana Pro = Gemini 3 Pro Image
 const MODEL_ID = "gemini-3-pro-image-preview";
 
 // ---------------------------------------------------------------------------
-// Image compression — keep images under API limits
+// Image compression
 // ---------------------------------------------------------------------------
 
 const compressImage = (
@@ -58,76 +56,85 @@ const compressImage = (
   });
 };
 
-/** Strip data URL prefix and return { mimeType, data } */
+/** Strip data URL prefix → { mimeType, data } */
 const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
   const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!match) {
-    return { mimeType: "image/jpeg", data: dataUrl };
-  }
+  if (!match) return { mimeType: "image/jpeg", data: dataUrl };
   return { mimeType: match[1], data: match[2] };
 };
 
 // ---------------------------------------------------------------------------
-// Prompt — mask-strict prompt. Split into intro + instruction for interleaving
+// Per-angle prompts — aggressive, action-first, with spatial specifics
 // ---------------------------------------------------------------------------
 
-const buildIntroPrompt = (angle: SimulationAngle): string => {
-  const angleContext: Record<SimulationAngle, string> = {
-    frontal: "frontal view",
-    lateral_left: "left profile",
-    lateral_right: "right profile",
-    top: "top-down view",
-  };
+const PROMPTS: Record<SimulationAngle, string> = {
+  frontal: `Simulate a hair transplant result on this person's frontal photo.
 
-  return `This is the ORIGINAL patient photo (${angleContext[angle]}). Do NOT change anything yet.`;
-};
+Add thick, dense hair to FILL these specific areas:
+1. HAIRLINE: Bring the hairline DOWN significantly — the forehead should shrink by at least 30%. Create a natural, slightly irregular new hairline with baby hairs at the edges
+2. TEMPLES: Both left and right temple corners (the "M-shape" recession) must be COMPLETELY filled with dense hair. Zero bare skin in the temple triangles
+3. CROWN: If any thinning is visible on top, fill it with dense coverage so zero scalp shows through
 
-const buildInstructionPrompt = (): string => {
-  return `This SECOND image is the SAME photo but with BRIGHT GREEN paint marking the EXACT areas where hair must be added.
+Hair must match the person's existing hair color, texture, and style EXACTLY. Same length — just dramatically more density and coverage.
 
-TASK: Output an edited version of the FIRST photo where you add natural hair ONLY inside the green-painted regions from this second image.
+Keep face, skin, beard, ears, eyebrows, clothing IDENTICAL. The result must look like a real photograph of this same person 12 months after a successful FUE transplant. Photorealistic, no artifacts.`,
 
-CRITICAL RULES:
-- ONLY add hair where the green paint is. Every pixel of bare skin that has NO green paint must remain COMPLETELY UNCHANGED
-- Match the patient's existing hair color, texture, direction, and length exactly
-- The green areas define the new hairline boundary — fill them with realistic follicles
-- Areas WITHOUT green paint = DO NOT TOUCH. No density changes, no color changes, no improvements outside the mask
-- Output must be photorealistic — no blurring, no plastic, no artifacts
-- Preserve face, skin, ears, beard, clothing EXACTLY as the original`;
+  lateral_left: `Simulate a hair transplant result on this person's LEFT SIDE profile photo.
+
+This is a side view. Focus on these SPECIFIC areas:
+1. TEMPORAL RECESSION: The triangular bare area between the front hairline and the ear — FILL IT COMPLETELY with thick hair. This temple triangle must have ZERO visible bare skin. The hairline should start much further FORWARD (toward the face) than it currently does
+2. HAIRLINE EDGE: The hairline visible from this side angle must be pushed forward and downward, creating a much lower, denser front edge
+3. TEMPLE POINT: The pointed area in front of and above the ear — extend the hair coverage here so it connects seamlessly to the sideburns
+
+The existing hair behind and above remains the same. Match color, texture, direction, and length exactly. Keep ear, face, jaw, beard, neck, clothing IDENTICAL.
+
+Output a photorealistic photo showing a dramatic improvement in the temple and lateral hairline area. This person should look like they had a successful 3000+ graft FUE transplant 12 months ago.`,
+
+  lateral_right: `Simulate a hair transplant result on this person's RIGHT SIDE profile photo.
+
+This is a side view. Focus on these SPECIFIC areas:
+1. TEMPORAL RECESSION: The triangular bare area between the front hairline and the ear — FILL IT COMPLETELY with thick hair. This temple triangle must have ZERO visible bare skin. The hairline should start much further FORWARD (toward the face) than it currently does
+2. HAIRLINE EDGE: The hairline visible from this side angle must be pushed forward and downward, creating a much lower, denser front edge
+3. TEMPLE POINT: The pointed area in front of and above the ear — extend the hair coverage here so it connects seamlessly to the sideburns
+
+The existing hair behind and above remains the same. Match color, texture, direction, and length exactly. Keep ear, face, jaw, beard, neck, clothing IDENTICAL.
+
+Output a photorealistic photo showing a dramatic improvement in the temple and lateral hairline area. This person should look like they had a successful 3000+ graft FUE transplant 12 months ago.`,
+
+  top: `Simulate a hair transplant result on this person's TOP-DOWN scalp photo.
+
+Add dense hair coverage to FILL all areas where scalp skin is currently visible:
+1. CROWN: The circular thinning area at the top — cover it completely with thick hair
+2. MID-SCALP: Any visible scalp through thinning hair in the middle zone — fill with dense follicles
+3. FRONTAL ZONE: The area near the front of the head viewed from above — ensure thick coverage extending forward
+
+Every spot where pink/white scalp is currently visible should be covered with dense, natural-looking hair. Match the existing hair color, texture, and direction. The result should show ZERO visible scalp through the hair when viewed from above.
+
+Photorealistic result showing the same person after a successful hair transplant with full coverage.`,
 };
 
 // ---------------------------------------------------------------------------
-// Core: call Nano Banana Pro
+// Core: call Nano Banana Pro with single image + prompt
 // ---------------------------------------------------------------------------
 
 const callNanoBananaPro = async (
-  cleanPhoto: string,
-  compositeGuide: string,
+  photo: string,
   angle: SimulationAngle
 ): Promise<string> => {
   console.log(`[NanaBananaPro] Processing ${angle}...`);
   const start = Date.now();
 
-  const cleanParsed = parseDataUrl(cleanPhoto);
-  const guideParsed = parseDataUrl(compositeGuide);
+  const parsed = parseDataUrl(photo);
+  const prompt = PROMPTS[angle];
 
-  // Interleave: text → image1 → text → image2 → final instruction
-  // This forces the model to "see" each image in context before acting
   const response = await ai.models.generateContent({
     model: MODEL_ID,
     contents: [
-      { text: buildIntroPrompt(angle) },
+      { text: prompt },
       {
         inlineData: {
-          mimeType: cleanParsed.mimeType,
-          data: cleanParsed.data,
-        },
-      },
-      { text: buildInstructionPrompt() },
-      {
-        inlineData: {
-          mimeType: guideParsed.mimeType,
-          data: guideParsed.data,
+          mimeType: parsed.mimeType,
+          data: parsed.data,
         },
       },
     ],
@@ -137,9 +144,8 @@ const callNanoBananaPro = async (
   });
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[NanaBananaPro] ${angle} completed in ${elapsed}s`);
+  console.log(`[NanaBananaPro] ${angle} done in ${elapsed}s`);
 
-  // Extract image from response
   const parts = response?.candidates?.[0]?.content?.parts;
   if (!parts) {
     throw new Error("Resposta vazia do modelo");
@@ -152,10 +158,9 @@ const callNanoBananaPro = async (
     }
   }
 
-  // If we got text but no image, log it
   for (const part of parts) {
     if ((part as any).text) {
-      console.warn(`[NanaBananaPro] Model returned text instead of image:`, (part as any).text);
+      console.warn(`[NanaBananaPro] Text instead of image:`, (part as any).text);
     }
   }
 
@@ -168,42 +173,29 @@ const callNanoBananaPro = async (
 
 export const simulateForAngle = async (
   angleImages: AngleImageMap,
-  angleMasks: AngleMaskMap,
-  composites: Record<SimulationAngle, string | null>,
   angle: SimulationAngle
 ): Promise<string> => {
   const photo = angleImages[angle];
-  const composite = composites[angle];
-
   if (!photo) throw new Error(`Sem foto para o angulo: ${angle}`);
-  if (!composite) throw new Error(`Sem mascara desenhada para o angulo: ${angle}`);
 
-  const compressedPhoto = await compressImage(photo);
-  const compressedComposite = await compressImage(composite);
-
-  return await callNanoBananaPro(compressedPhoto, compressedComposite, angle);
+  const compressed = await compressImage(photo);
+  return await callNanoBananaPro(compressed, angle);
 };
 
 export const simulateAllAngles = async (
   angleImages: AngleImageMap,
-  angleMasks: AngleMaskMap,
-  composites: Record<SimulationAngle, string | null>,
   onResult: (
     angle: SimulationAngle,
     result: { image?: string; error?: string }
   ) => void
 ): Promise<void> => {
   const angles: SimulationAngle[] = ["frontal", "lateral_left", "lateral_right", "top"];
-
-  // Only process angles that have BOTH photo AND mask
-  const activeAngles = angles.filter(
-    (a) => angleImages[a] !== null && composites[a] !== null
-  );
+  const activeAngles = angles.filter((a) => angleImages[a] !== null);
 
   // Sequential to avoid rate limiting
   for (const angle of activeAngles) {
     try {
-      const image = await simulateForAngle(angleImages, angleMasks, composites, angle);
+      const image = await simulateForAngle(angleImages, angle);
       onResult(angle, { image });
     } catch (err: any) {
       console.error(`[${angle}] Erro:`, err);

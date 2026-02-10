@@ -68,32 +68,32 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 };
 
 // ---------------------------------------------------------------------------
-// Prompt — single, mask-aware prompt for all angles
+// Prompt — mask-strict prompt. Split into intro + instruction for interleaving
 // ---------------------------------------------------------------------------
 
-const buildPrompt = (angle: SimulationAngle): string => {
+const buildIntroPrompt = (angle: SimulationAngle): string => {
   const angleContext: Record<SimulationAngle, string> = {
-    frontal: "frontal view of the patient's face",
-    lateral_left: "left side profile of the patient's head",
-    lateral_right: "right side profile of the patient's head",
-    top: "top-down view of the patient's scalp",
+    frontal: "frontal view",
+    lateral_left: "left profile",
+    lateral_right: "right profile",
+    top: "top-down view",
   };
 
-  return `You are a professional hair transplant simulation specialist.
+  return `This is the ORIGINAL patient photo (${angleContext[angle]}). Do NOT change anything yet.`;
+};
 
-I'm sending you TWO images:
-1. FIRST IMAGE: The original clean photo of the patient (${angleContext[angle]})
-2. SECOND IMAGE: The SAME photo with GREEN painted areas showing exactly WHERE new hair should be added
+const buildInstructionPrompt = (): string => {
+  return `This SECOND image is the SAME photo but with BRIGHT GREEN paint marking the EXACT areas where hair must be added.
 
-YOUR TASK: Edit the FIRST (clean) image and add realistic, natural-looking hair ONLY in the areas that are painted green in the second image.
+TASK: Output an edited version of the FIRST photo where you add natural hair ONLY inside the green-painted regions from this second image.
 
-RULES:
-- Add dense, natural follicular units matching the patient's existing hair color, texture, and direction
-- The green areas are your ONLY guide — add hair THERE and nowhere else
-- Keep hair the SAME LENGTH as existing hair — just add density and coverage
-- Preserve the patient's face, skin, beard, ears, and everything else EXACTLY
-- The result must look like a real photo, not digitally altered
-- No blurring, no plastic look, no artifacts`;
+CRITICAL RULES:
+- ONLY add hair where the green paint is. Every pixel of bare skin that has NO green paint must remain COMPLETELY UNCHANGED
+- Match the patient's existing hair color, texture, direction, and length exactly
+- The green areas define the new hairline boundary — fill them with realistic follicles
+- Areas WITHOUT green paint = DO NOT TOUCH. No density changes, no color changes, no improvements outside the mask
+- Output must be photorealistic — no blurring, no plastic, no artifacts
+- Preserve face, skin, ears, beard, clothing EXACTLY as the original`;
 };
 
 // ---------------------------------------------------------------------------
@@ -111,18 +111,19 @@ const callNanoBananaPro = async (
   const cleanParsed = parseDataUrl(cleanPhoto);
   const guideParsed = parseDataUrl(compositeGuide);
 
-  const prompt = buildPrompt(angle);
-
+  // Interleave: text → image1 → text → image2 → final instruction
+  // This forces the model to "see" each image in context before acting
   const response = await ai.models.generateContent({
     model: MODEL_ID,
     contents: [
-      { text: prompt },
+      { text: buildIntroPrompt(angle) },
       {
         inlineData: {
           mimeType: cleanParsed.mimeType,
           data: cleanParsed.data,
         },
       },
+      { text: buildInstructionPrompt() },
       {
         inlineData: {
           mimeType: guideParsed.mimeType,
@@ -210,7 +211,3 @@ export const simulateAllAngles = async (
     }
   }
 };
-
-// Legacy exports for backwards compat (if anything references them)
-export const restoreHairForAngle = simulateForAngle;
-export const restoreHairAllAngles = simulateAllAngles;

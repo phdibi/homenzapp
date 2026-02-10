@@ -346,19 +346,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ imageSrc, onSaveMask, onC
       solidCtx.restore();
     }
 
-    // Composite: image + solid mask overlay (for AI to see context)
+    // Composite: image + BRIGHT solid green overlay (fully opaque so AI can't miss it)
     const composite = document.createElement('canvas');
     composite.width = maskCanvas.width;
     composite.height = maskCanvas.height;
     const compCtx = composite.getContext('2d')!;
     compCtx.drawImage(imageRef.current!, 0, 0, composite.width, composite.height);
-    // Draw solid mask with some transparency so AI can see both the face AND the marked area
-    compCtx.globalAlpha = 0.5;
+    // Full opacity green — model MUST see this clearly
     compCtx.drawImage(solidMask, 0, 0);
-    compCtx.globalAlpha = 1.0;
 
     const maskDataUrl = solidMask.toDataURL('image/png');
-    const compositeDataUrl = composite.toDataURL('image/jpeg', 0.9);
+    const compositeDataUrl = composite.toDataURL('image/png');
     onSaveMask(maskDataUrl, compositeDataUrl);
   };
 

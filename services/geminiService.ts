@@ -113,18 +113,23 @@ Output a single photorealistic photograph showing a realistic, moderate improvem
   lateral_right: `${SYSTEM_PREAMBLE}
 This is a RIGHT SIDE profile photo of the patient. Simulate the hair transplant result for this angle.
 
-IMPORTANT: The result on this side should be SYMMETRICAL and CONSISTENT with what a natural transplant would produce. Both sides of the head receive the same treatment in a real FUE procedure, so the improvement here should be moderate and proportional — NOT excessive.
+CRITICAL — LESS IS MORE: For this side view, make MINIMAL, SUBTLE changes. Err on the side of doing TOO LITTLE rather than too much. The goal is a slight, natural-looking improvement — NOT a dramatic transformation.
 
-Analyze the visible recession and apply improvements PROPORTIONALLY:
-1. TEMPORAL AREA: If there is a receded triangular area between the front hairline and the ear, add hair to partially or fully cover it PROPORTIONALLY to the degree of recession visible. Do NOT over-fill this area. Only add hair where bare skin from hair loss is clearly visible.
-2. HAIRLINE EDGE: If the front hairline has receded when viewed from this side, bring it forward by a moderate, natural amount. The edge should be soft and gradual, not a hard line.
-3. TEMPLE POINT: If the area in front of and above the ear shows recession, extend hair coverage moderately to blend with the sideburns naturally.
+Analyze the visible recession carefully before adding ANY hair:
+1. TEMPORAL AREA: Only add a SMALL amount of hair to soften the recession, if visible. Do NOT completely fill the temple triangle. Leave some natural recession — a real transplant rarely achieves 100% coverage in this area. Add just enough to soften the edge.
+2. HAIRLINE EDGE: Do NOT push the hairline forward aggressively. At most, bring it forward by a VERY SMALL amount (a few millimeters visually). The improvement should be barely noticeable at first glance.
+3. TEMPLE POINT: Only add minimal hair to slightly blend the area near the ear. Do not create a dramatically different silhouette.
 
-Keep all existing hair behind and above unchanged. Keep ear, face, jaw, beard, neck, clothing IDENTICAL.
+STRICT RULES FOR THIS VIEW:
+- Do NOT create a dramatically different appearance from the original photo
+- Do NOT add thick, dense hair where there was none — add sparse, gradual coverage at most
+- Do NOT push the hairline more than slightly forward
+- The person should still look like they have the SAME hairstyle, just with slightly better coverage at the edges
+- If in doubt, add LESS hair, not more
 
-RESTRAINT: Do NOT add more hair than necessary. A natural result is more important than maximum coverage.
+Keep all existing hair, ear, face, jaw, beard, neck, clothing IDENTICAL.
 
-Output a single photorealistic photograph showing a realistic, moderate improvement. No text, no labels.`,
+Output a single photorealistic photograph showing a SUBTLE improvement. No text, no labels.`,
 
   top: `${SYSTEM_PREAMBLE}
 This is a TOP-DOWN photo of the patient's scalp. Simulate the hair transplant result for this angle.

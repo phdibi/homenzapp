@@ -67,79 +67,74 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 // System preamble — shared across all angle prompts for consistency
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PREAMBLE = `You are a board-certified hair transplant surgeon reviewing a patient photo. Your task is to generate a REALISTIC preview of what this patient would look like 12 months after a successful FUE hair transplant.
+const SYSTEM_PREAMBLE = `You are a hair transplant surgeon generating a realistic FUE transplant simulation.
 
-CRITICAL RULES:
-- Be CONSERVATIVE and PROPORTIONAL. Only add hair where there is clearly visible scalp or skin due to hair loss. Do NOT add hair to areas that already have adequate coverage.
-- The amount of hair added must be PROPORTIONAL to the degree of hair loss visible. Mild recession gets mild improvement. Severe recession gets more improvement. Never over-generate.
-- The result must look like a REAL medical outcome, not a dramatic makeover. A realistic FUE transplant typically provides moderate improvement, not a full head of thick hair from severe baldness.
-- PRESERVE the person's identity: face, skin tone, expression, ears, eyebrows, beard, clothing, background, and all non-hair features must remain IDENTICAL.
-- Match the existing hair's color, texture, curl pattern, direction of growth, and approximate length EXACTLY.
-- Create natural, slightly irregular hairlines with fine baby hairs at the edges — never a sharp, artificial line.
-- DO NOT alter the overall image composition, lighting, or color grading.
+YOUR GOAL: Add dense, thick hair ONLY to the specific areas affected by hair loss — the frontotemporal hairline and the crown. Be BOLD and AGGRESSIVE in these target zones. But do NOT touch any area that already has adequate hair coverage.
+
+TARGET ZONES (add hair here aggressively):
+- FRONTOTEMPORAL HAIRLINE: The receding hairline at the front and the temple corners (M-shape recession). Push the hairline forward significantly and fill the temple triangles with dense hair.
+- CROWN: Any thinning or bald spot at the top/back of the head. Fill it with dense coverage.
+
+FORBIDDEN ZONES (do NOT add hair here):
+- The sides of the head (above the ears) where hair already exists
+- The back of the head where hair already exists
+- Any area that already has normal hair density
+
+STRICT RULES:
+- ONLY add hair where there is clearly visible scalp due to hair loss
+- Match the person's existing hair color, texture, curl pattern, and growth direction EXACTLY
+- Create a natural, slightly irregular new hairline with baby hairs — never a sharp artificial line
+- PRESERVE the person's face, skin, ears, eyebrows, beard, clothing, background IDENTICALLY
+- DO NOT alter the image composition, lighting, or color grading
+- The result must look like a real photograph, photorealistic, no artifacts
 `;
 
 // ---------------------------------------------------------------------------
-// Per-angle prompts — conservative, proportional, with spatial specifics
+// Per-angle prompts — bold on target zones, strict on preservation
 // ---------------------------------------------------------------------------
 
 const PROMPTS: Record<SimulationAngle, string> = {
   frontal: `${SYSTEM_PREAMBLE}
-This is a FRONTAL photo of the patient. Simulate the hair transplant result for this angle.
+This is a FRONTAL photo. Simulate the transplant result:
 
-Analyze the current degree of hair loss and apply improvements PROPORTIONALLY:
-1. HAIRLINE: If the hairline has receded, bring it forward by a MODERATE, REALISTIC amount. The new hairline should look natural with soft, irregular edges and baby hairs — not a dramatic or artificial-looking change. Lower it proportionally to the degree of recession observed.
-2. TEMPLES: If there are receded temple corners (M-shape), fill them proportionally. Add hair density gradually from the existing hairline edges inward — the transition should be seamless and natural.
-3. CROWN/TOP: If thinning is visible on top, add moderate density to reduce visible scalp, but maintain a natural look. Not every patch needs to be filled to maximum density.
+1. HAIRLINE: Bring the hairline DOWN aggressively — create a new, lower, denser hairline. Fill the forehead recession boldly. The new hairline should have natural baby hairs at the edges but should clearly be much lower and denser than the current one.
+2. TEMPLE CORNERS: The M-shape recession at both temples must be filled with dense hair. These triangle areas should have significant new hair coverage, closing the M-shape substantially.
+3. CROWN/TOP: If any thinning is visible on top, add dense coverage to eliminate visible scalp in that zone.
 
-The improvement should be BELIEVABLE — a person who knew this patient before surgery should think "they look better" not "that's obviously fake."
+IMPORTANT: Only add hair to areas of visible hair loss. Do NOT add hair to the sides or any area that already has normal coverage. The sides, ears, face, and all other features remain IDENTICAL.
 
 Output a single photorealistic photograph. No text, no labels, no side-by-side.`,
 
   lateral_left: `${SYSTEM_PREAMBLE}
-This is a LEFT SIDE profile photo of the patient. Simulate the hair transplant result for this angle.
+This is a LEFT SIDE profile photo. Simulate the transplant result:
 
-IMPORTANT: The result on this side should be SYMMETRICAL and CONSISTENT with what a natural transplant would produce. Both sides of the head receive the same treatment in a real FUE procedure, so the improvement here should be moderate and proportional.
+1. FRONTOTEMPORAL HAIRLINE: The front hairline visible from this angle — push it FORWARD significantly toward the face. Where there is recession between the hairline and the forehead, fill it with dense hair. The hairline should start much further forward than it currently does.
+2. TEMPLE TRIANGLE: The triangular bare area between the front hairline and the ear — fill it with dense hair. This is the primary target zone from this angle. Close this gap with thick, natural-looking hair.
+3. TEMPLE POINT: Extend hair coverage in front of and above the ear to connect seamlessly with the sideburn area.
 
-Analyze the visible recession and apply improvements PROPORTIONALLY:
-1. TEMPORAL AREA: If there is a receded triangular area between the front hairline and the ear, add hair to partially or fully cover it PROPORTIONALLY to the degree of recession visible. Do not force maximum density if only mild recession exists.
-2. HAIRLINE EDGE: If the front hairline has receded when viewed from this side, bring it forward by a moderate, natural amount. The edge should be soft and gradual, not a hard line.
-3. TEMPLE POINT: If the area in front of and above the ear shows recession, extend hair coverage moderately to blend with the sideburns naturally.
+IMPORTANT: Only add hair to the frontotemporal recession zone. Do NOT add hair to the sides or back where hair already exists. The ear, face, jaw, beard, neck, clothing remain IDENTICAL. Do NOT add extra volume or density to areas that already have normal hair.
 
-Keep all existing hair behind and above unchanged. Keep ear, face, jaw, beard, neck, clothing IDENTICAL.
-
-Output a single photorealistic photograph showing a realistic, moderate improvement. No text, no labels.`,
+Output a single photorealistic photograph. No text, no labels.`,
 
   lateral_right: `${SYSTEM_PREAMBLE}
-This is a RIGHT SIDE profile photo of the patient. Simulate the hair transplant result for this angle.
+This is a RIGHT SIDE profile photo. Simulate the transplant result:
 
-CRITICAL — LESS IS MORE: For this side view, make MINIMAL, SUBTLE changes. Err on the side of doing TOO LITTLE rather than too much. The goal is a slight, natural-looking improvement — NOT a dramatic transformation.
+1. FRONTOTEMPORAL HAIRLINE: The front hairline visible from this angle — push it FORWARD significantly toward the face. Where there is recession between the hairline and the forehead, fill it with dense hair. The hairline should start much further forward than it currently does.
+2. TEMPLE TRIANGLE: The triangular bare area between the front hairline and the ear — fill it with dense hair. This is the primary target zone from this angle. Close this gap with thick, natural-looking hair.
+3. TEMPLE POINT: Extend hair coverage in front of and above the ear to connect seamlessly with the sideburn area.
 
-Analyze the visible recession carefully before adding ANY hair:
-1. TEMPORAL AREA: Only add a SMALL amount of hair to soften the recession, if visible. Do NOT completely fill the temple triangle. Leave some natural recession — a real transplant rarely achieves 100% coverage in this area. Add just enough to soften the edge.
-2. HAIRLINE EDGE: Do NOT push the hairline forward aggressively. At most, bring it forward by a VERY SMALL amount (a few millimeters visually). The improvement should be barely noticeable at first glance.
-3. TEMPLE POINT: Only add minimal hair to slightly blend the area near the ear. Do not create a dramatically different silhouette.
+IMPORTANT: Only add hair to the frontotemporal recession zone. Do NOT add hair to the sides or back where hair already exists. Do NOT add extra volume, thickness, or density to areas that already have normal hair coverage — only fill the recession. The ear, face, jaw, beard, neck, clothing remain IDENTICAL.
 
-STRICT RULES FOR THIS VIEW:
-- Do NOT create a dramatically different appearance from the original photo
-- Do NOT add thick, dense hair where there was none — add sparse, gradual coverage at most
-- Do NOT push the hairline more than slightly forward
-- The person should still look like they have the SAME hairstyle, just with slightly better coverage at the edges
-- If in doubt, add LESS hair, not more
-
-Keep all existing hair, ear, face, jaw, beard, neck, clothing IDENTICAL.
-
-Output a single photorealistic photograph showing a SUBTLE improvement. No text, no labels.`,
+Output a single photorealistic photograph. No text, no labels.`,
 
   top: `${SYSTEM_PREAMBLE}
-This is a TOP-DOWN photo of the patient's scalp. Simulate the hair transplant result for this angle.
+This is a TOP-DOWN photo of the scalp. Simulate the transplant result:
 
-Analyze the areas of visible scalp and apply improvements PROPORTIONALLY:
-1. CROWN: If there is a circular thinning area at the crown, add moderate hair density to reduce visible scalp. The coverage should be proportional to the size and severity of the thinning.
-2. MID-SCALP: If scalp is visible through thinning hair in the middle zone, add gradual density improvement. Maintain the natural hair growth pattern and direction.
-3. FRONTAL ZONE: If the frontal area shows thinning from above, add moderate density to improve coverage.
+1. CROWN: If there is thinning or a bald spot at the crown, fill it AGGRESSIVELY with dense hair. Eliminate visible scalp in this zone. This is the primary target from this angle.
+2. MID-SCALP: If scalp is visible through thinning hair in the middle zone, add dense coverage to eliminate the transparency.
+3. FRONTAL ZONE: If the frontal area shows thinning from above, add thick coverage extending forward to recreate a dense frontal hairline.
 
-The improvement should reduce visible scalp proportionally but maintain a natural look. Hair direction should follow the patient's existing growth pattern (typically radiating outward from a whorl point).
+IMPORTANT: Only add hair where scalp is visibly showing through due to hair loss. Maintain the natural growth direction pattern (radiating outward from the whorl). Do NOT add density to areas that already have normal coverage.
 
 Output a single photorealistic photograph. No text, no labels.`,
 };

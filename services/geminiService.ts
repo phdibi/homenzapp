@@ -2,13 +2,13 @@
  * Hair Transplant Simulation Service — v5 (Two-Step Pipeline)
  *
  * Step 1: Fill hair in drawn/marked areas (green overlay on photo)
- * Step 2: Apply a selected hairstyle to the filled result
+ * Step 2: Harmonize — blend new hair seamlessly with existing hair
  *
  * Uses Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
  */
 
 import { GoogleGenAI } from "@google/genai";
-import type { SimulationAngle, HairstyleOption } from "../types";
+import type { SimulationAngle } from "../types";
 
 // ---------------------------------------------------------------------------
 // Gemini configuration
@@ -60,61 +60,6 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 };
 
 // ---------------------------------------------------------------------------
-// Hairstyle options
-// ---------------------------------------------------------------------------
-
-export const HAIRSTYLE_OPTIONS: HairstyleOption[] = [
-  {
-    id: 'side_part',
-    label: 'Repartido Lateral',
-    description: 'Corte classico com repartido lateral definido',
-    promptFragment: 'a classic side part with clean separation, hair combed neatly to one side with volume on top and shorter on the sides',
-  },
-  {
-    id: 'slick_back',
-    label: 'Slick Back',
-    description: 'Cabelo penteado para tras com brilho',
-    promptFragment: 'a sleek slicked-back style with all hair combed backwards, smooth and polished with a slight shine, shorter and tapered on the sides',
-  },
-  {
-    id: 'textured_crop',
-    label: 'Textured Crop',
-    description: 'Corte curto texturizado moderno',
-    promptFragment: 'a modern textured crop with short messy fringe at the front, textured layers on top, faded shorter sides',
-  },
-  {
-    id: 'buzz_cut',
-    label: 'Buzz Cut',
-    description: 'Corte maquina uniforme curto',
-    promptFragment: 'a clean uniform buzz cut, very short (about 3mm) all over, neat and even with visible scalp texture',
-  },
-  {
-    id: 'messy_textured',
-    label: 'Texturizado Casual',
-    description: 'Estilo casual com textura e movimento',
-    promptFragment: 'a casual messy textured style with tousled layers, natural movement and volume on top, relaxed effortless look',
-  },
-  {
-    id: 'pompadour',
-    label: 'Pompadour',
-    description: 'Volume alto na frente penteado para tras',
-    promptFragment: 'a modern pompadour with significant volume and height at the front, swept upward and backward, clean tapered sides',
-  },
-  {
-    id: 'crew_cut',
-    label: 'Crew Cut',
-    description: 'Corte militar curto classico',
-    promptFragment: 'a classic crew cut with slightly longer top graduated shorter toward the crown, very short faded sides, clean and neat military style',
-  },
-  {
-    id: 'natural_flow',
-    label: 'Natural Fluido',
-    description: 'Cabelo com fluxo natural medio',
-    promptFragment: 'a natural flowing medium-length style, hair falling naturally with soft movement, no rigid styling, relaxed and organic look',
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Step 1 prompts — Hair Fill (green markings → hair)
 // ---------------------------------------------------------------------------
 
@@ -149,30 +94,33 @@ Output one photorealistic photo. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
-// Step 2 prompts — Hairstyle application
+// Step 2 prompts — Harmonize (blend new hair with existing)
 // ---------------------------------------------------------------------------
 
-const STEP2_PREAMBLE = `You are a professional hair stylist creating a styled look.
-The person in this photo has a full head of hair. Your task is to restyle their hair into a specific hairstyle while preserving everything else in the image EXACTLY.
+const STEP2_PROMPTS: Record<SimulationAngle, string> = {
+  frontal: `Improve this photo of a person's head. The person recently had a hair transplant and some areas of new hair may look slightly unnatural, patchy, or not fully blended with the existing hair.
 
-STYLING RULES:
-- Change ONLY the hair styling — do not add or remove hair volume/density
-- The hair color, texture, and quality remain the same — only the arrangement/direction changes
-- Face, skin, ears, eyebrows, beard, clothing, background: IDENTICAL
-- Lighting and image quality: IDENTICAL
-- Result must look like a real photograph of a person with this hairstyle`;
+DO THIS:
+1. Make ALL the hair look completely natural and uniform — as if it always grew there
+2. Blend any transitions between new and old hair so there are no visible seams or density differences
+3. Ensure the hairline looks natural with soft edges and baby hairs
+4. Adjust hair density so it looks even and healthy across all areas
+5. Keep the same hair color, general length, and growth direction
+6. Do NOT change the face, skin, ears, eyebrows, beard, clothing, or background — ONLY improve the hair
 
-const buildStep2Prompt = (angle: SimulationAngle, hairstyle: HairstyleOption): string => {
-  const angleContext = angle === 'frontal'
-    ? 'This is a FRONTAL photo.'
-    : 'This is a TOP-DOWN photo.';
+Output one photorealistic photo. No text. No labels. No split view.`,
 
-  return `${STEP2_PREAMBLE}
+  top: `Improve this top-down photo of a person's scalp. The person recently had a hair transplant and some areas of new hair may look slightly unnatural, patchy, or not fully blended with the existing hair.
 
-${angleContext}
-Style the person's hair into: ${hairstyle.label} — ${hairstyle.promptFragment}
+DO THIS:
+1. Make ALL the hair look completely natural and uniform — as if it always grew there
+2. Blend any transitions between new and old hair so there are no visible seams or density differences
+3. Eliminate any visible scalp showing through in transplanted areas
+4. Ensure natural growth direction radiating from the crown whorl
+5. Keep the same hair color and general texture
+6. Do NOT change anything except the hair — ears, neck, background stay identical
 
-Output a single photorealistic photograph. No text, no labels.`;
+Output one photorealistic photo. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -240,28 +188,24 @@ export const step1FillHair = async (
   compositeDataUrl: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  // Compress but with HIGH quality (0.95) to preserve green markings visibility
-  // The composite comes as PNG from DrawingCanvas — we resize but keep colors sharp
+  // High quality (0.95) to preserve green markings visibility
   const compressed = await compressImage(compositeDataUrl, 1536, 0.95);
   // Higher temperature (0.6) for more aggressive edits on marked areas
   return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`, 0.6);
 };
 
-/** Step 2: Apply hairstyle to a filled result */
-export const step2ApplyHairstyle = async (
+/** Step 2: Harmonize — blend new hair seamlessly with existing */
+export const step2Harmonize = async (
   filledImageDataUrl: string,
-  angle: SimulationAngle,
-  hairstyle: HairstyleOption
+  angle: SimulationAngle
 ): Promise<string> => {
   const compressed = await compressImage(filledImageDataUrl);
-  const prompt = buildStep2Prompt(angle, hairstyle);
-  return await callGeminiImage(compressed, prompt, `step2-${angle}-${hairstyle.id}`);
+  return await callGeminiImage(compressed, STEP2_PROMPTS[angle], `step2-harmonize-${angle}`, 0.4);
 };
 
 /** Run both steps sequentially for all provided angles */
 export const runFullPipeline = async (
   composites: Record<SimulationAngle, string | null>,
-  hairstyle: HairstyleOption,
   onStep1Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void,
   onStep2Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
 ): Promise<void> => {
@@ -281,15 +225,15 @@ export const runFullPipeline = async (
     }
   }
 
-  // Step 2: apply hairstyle to successful step 1 results
+  // Step 2: harmonize successful step 1 results
   for (const angle of angles) {
     const filled = step1Results[angle];
     if (!filled) continue;
     try {
-      const image = await step2ApplyHairstyle(filled, angle, hairstyle);
+      const image = await step2Harmonize(filled, angle);
       onStep2Result(angle, { image });
     } catch (err: any) {
-      onStep2Result(angle, { error: err?.message || 'Erro no penteado' });
+      onStep2Result(angle, { error: err?.message || 'Erro na harmonizacao' });
     }
   }
 };

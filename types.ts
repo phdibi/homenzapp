@@ -11,33 +11,12 @@ export interface DrawingState {
 
 export type AngleDrawingMap = Record<SimulationAngle, DrawingState>;
 
-// --- Hairstyles ---
-export type HairstyleId =
-  | 'side_part'
-  | 'slick_back'
-  | 'textured_crop'
-  | 'buzz_cut'
-  | 'messy_textured'
-  | 'pompadour'
-  | 'crew_cut'
-  | 'natural_flow';
-
-export interface HairstyleOption {
-  id: HairstyleId;
-  label: string;
-  description: string;
-  promptFragment: string;
-}
-
 // --- Pipeline ---
 export type PipelineStep =
   | 'upload'
   | 'draw'
-  | 'step1_processing'
-  | 'step1_done'
-  | 'select_hairstyle'
-  | 'step2_processing'
-  | 'step2_done';
+  | 'processing'
+  | 'done';
 
 export interface AngleStepResult {
   angle: SimulationAngle;

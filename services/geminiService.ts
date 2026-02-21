@@ -68,15 +68,16 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 const PROMPTS: Record<SimulationAngle, string> = {
   frontal: `I am providing TWO images of the same person's face.
 Image 1: The original, clean photo.
-Image 2: The exact same photo, but with a RED MASK.
+Image 2: The exact same photo, but with a solid RED MASK painted on the forehead.
 
-YOUR TASK: You are a master VFX artist applying a realistic custom hairpiece (prosthetic wig) to this person's head. The RED MASK in Image 2 is the EXACT physical template and position for this hairpiece.
+YOUR TASK: Edit Image 1 to add hair, strictly guided by the RED MASK from Image 2.
 
-CRITICAL RULES:
-1. THE MASK IS THE LAW: The hairpiece must completely and densely fill the ENTIRE red area. The lowest edge of the new hair MUST reach the lowest edge of the red mask, no matter how low it is on the forehead. Do NOT shorten or raise the hairpiece.
-2. NO GAPS: Fill all bald areas between the existing highest hair and the bottom-most edge of the red mask.
-3. PERFECT BLENDING: The final result MUST NOT look like a fake wig. It must look like natural, real, growing hair that perfectly matches the patient's existing hair color, texture, and lighting.
-4. ISOLATED EDITS: Do not modify any part of the face, skin beneath the mask, eyebrows, or background.
+CRITICAL INSTRUCTIONS:
+1. PIXEL-PERFECT REPLACEMENT: Treat the RED MASK as a definitive stencil. You MUST replace EVERY SINGLE RED PIXEL with dense, natural-looking hair. 
+2. IGNORE ANATOMY: Do not attempt to guess where the "natural" hairline should be. Ignore standard facial proportions. If the red mask is drawn aggressively low on the forehead, the new hair MUST go exactly that low.
+3. NO BALD GAPS: The entire area between the existing hair on top and the very bottom edge of the red mask must be completely filled with thick hair. The red shape dictates the exact boundaries.
+4. PHOTOREALISM: Despite the strict shape constraints, the generated hair must look like a perfectly blended, natural extension of the patient's existing hair (match color, lighting, texture).
+5. ISOLATION: Do not alter the eyes, skin below the red mask, background, or clothing.
 
 Output ONLY one photorealistic photo based on Image 1 with the hair added. No text. No labels. No split view.`,
 

@@ -75,23 +75,23 @@ YOUR TASK: You are a master VFX artist applying a realistic custom hairpiece (pr
 CRITICAL RULES:
 1. THE MASK IS THE LAW: The hairpiece must completely and densely fill the ENTIRE red area. The lowest edge of the new hair MUST reach the lowest edge of the red mask, no matter how low it is on the forehead. Do NOT shorten or raise the hairpiece.
 2. NO GAPS: Fill all bald areas between the existing highest hair and the bottom-most edge of the red mask.
-3. PERFECT BLENDING: The prosthetic hair must perfectly match the patient's existing hair color, texture, and lighting so it looks 100% natural and seamless.
+3. PERFECT BLENDING: The final result MUST NOT look like a fake wig. It must look like natural, real, growing hair that perfectly matches the patient's existing hair color, texture, and lighting.
 4. ISOLATED EDITS: Do not modify any part of the face, skin beneath the mask, eyebrows, or background.
 
-Output ONLY one photorealistic photo based on Image 1 with the hairpiece added. No text. No labels. No split view.`,
+Output ONLY one photorealistic photo based on Image 1 with the hair added. No text. No labels. No split view.`,
 
   top: `I am providing TWO images of the same person's scalp from above.
 Image 1: The original, clean photo.
-Image 2: The exact same photo, but with RED MARKS.
+Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask for a hair transplant.
 
-YOUR TASK: You are a master VFX artist applying custom hair systems (prosthetic hair patches) to this person's scalp. The RED MARKS in Image 2 are the EXACT physical templates for these hair patches.
+YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
 
 CRITICAL RULES:
-1. THE MASK IS THE LAW: You must apply dense, natural hair EXACTLY where the red marks are. Do not add hair outside these areas.
-2. DENSITY & BLENDING: Fill the marked areas completely so no scalp is visible underneath. Match the existing hair color, texture, and natural crown growth direction.
-3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all healthy hair, ears, neck, and background 100% identical to Image 1.
+1. STRICT SPATIAL ACCURACY: Analyze exactly where the red markings are located in Image 2. Add new dense hair ONLY within these explicitly marked zones to cover the visible scalp. Do not add hair outside these areas.
+2. DENSITY & BLENDING: Fill the marked area completely so no scalp is visible. Match the existing hair color, texture, and natural crown growth direction (whorl).
+3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all other parts of the head, ears, neck, body, and background 100% identical to Image 1.
 
-Output ONLY one photorealistic photo based on Image 1 with the hair systems added. No text. No labels. No split view.`,
+The red marks are an ABSOLUTE BOUNDARY. Fill the area within the red marks densely. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------

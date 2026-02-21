@@ -68,30 +68,30 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 const PROMPTS: Record<SimulationAngle, string> = {
   frontal: `I am providing TWO images of the same person's face.
 Image 1: The original, clean photo.
-Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask tracking where a hair transplant should happen.
+Image 2: The exact same photo, but with a RED MASK.
 
-YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
+YOUR TASK: You are a master VFX artist applying a realistic custom hairpiece (prosthetic wig) to this person's head. The RED MASK in Image 2 is the EXACT physical template and position for this hairpiece.
 
 CRITICAL RULES:
-1. ABSOLUTE SPATIAL COMPLIANCE: The red mask is your EXACT template. You MUST fill the ENTIRE red area with thick hair. Do NOT stop short. The new hairline MUST go as low down the forehead as the lowest edge of the red mask. Overriding the mask because you think it is "too low" is FORBIDDEN.
-2. FILL THE ENTIRE AREA: Fill all bald areas located between the existing highest hair and the bottom-most edge of the red mask with dense, thick, natural-looking hair. Leave no bald spots inside the red zone.
-3. PERFECT BLENDING: The new hair must perfectly match the patient's existing hair color, texture, lighting, and growth direction. Seamlessly blend into the existing hair.
-4. ISOLATED EDITS: Keep the face, forehead texture BELOW the new hairline, eyebrows, skin, background, and clothing 100% identical to Image 1.
+1. THE MASK IS THE LAW: The hairpiece must completely and densely fill the ENTIRE red area. The lowest edge of the new hair MUST reach the lowest edge of the red mask, no matter how low it is on the forehead. Do NOT shorten or raise the hairpiece.
+2. NO GAPS: Fill all bald areas between the existing highest hair and the bottom-most edge of the red mask.
+3. PERFECT BLENDING: The prosthetic hair must perfectly match the patient's existing hair color, texture, and lighting so it looks 100% natural and seamless.
+4. ISOLATED EDITS: Do not modify any part of the face, skin beneath the mask, eyebrows, or background.
 
-The red marks are an ABSOLUTE FILL ZONE. You must drag the hairline down to exactly match the bottom of the red shape. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
+Output ONLY one photorealistic photo based on Image 1 with the hairpiece added. No text. No labels. No split view.`,
 
   top: `I am providing TWO images of the same person's scalp from above.
 Image 1: The original, clean photo.
-Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask for a hair transplant.
+Image 2: The exact same photo, but with RED MARKS.
 
-YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
+YOUR TASK: You are a master VFX artist applying custom hair systems (prosthetic hair patches) to this person's scalp. The RED MARKS in Image 2 are the EXACT physical templates for these hair patches.
 
 CRITICAL RULES:
-1. STRICT SPATIAL ACCURACY: Analyze exactly where the red markings are located in Image 2. Add new dense hair ONLY within these explicitly marked zones to cover the visible scalp. Do not add hair outside these areas.
-2. DENSITY & BLENDING: Fill the marked area completely so no scalp is visible. Match the existing hair color, texture, and natural crown growth direction (whorl).
-3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all other parts of the head, ears, neck, body, and background 100% identical to Image 1.
+1. THE MASK IS THE LAW: You must apply dense, natural hair EXACTLY where the red marks are. Do not add hair outside these areas.
+2. DENSITY & BLENDING: Fill the marked areas completely so no scalp is visible underneath. Match the existing hair color, texture, and natural crown growth direction.
+3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all healthy hair, ears, neck, and background 100% identical to Image 1.
 
-The red marks are an ABSOLUTE BOUNDARY. Fill the area within the red marks densely. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
+Output ONLY one photorealistic photo based on Image 1 with the hair systems added. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -158,94 +158,6 @@ const callGeminiTwoImages = async (
   throw new Error("Modelo nao retornou imagem — tente novamente");
 };
 
-// --- Image Processing Utilities for the Patch Approach ---
-
-interface BBox { x: number; y: number; width: number; height: number; }
-
-const extractBoundingBox = (drawingDataUrl: string, padding = 40): Promise<BBox | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-      let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
-      let hasPixels = false;
-
-      for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] > 0) { // Alpha channel > 0 indicates drawing
-          hasPixels = true;
-          const pixelIndex = i / 4;
-          const x = pixelIndex % canvas.width;
-          const y = Math.floor(pixelIndex / canvas.width);
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-
-      if (!hasPixels) {
-        resolve(null);
-        return;
-      }
-
-      const x = Math.max(0, minX - padding);
-      const y = Math.max(0, minY - padding * 2); // extra padding on top for hair height
-      const width = Math.min(canvas.width - x, maxX - minX + padding * 2);
-      const height = Math.min(canvas.height - y, maxY - minY + padding * 2);
-
-      resolve({ x, y, width, height });
-    };
-    img.src = drawingDataUrl;
-  });
-};
-
-const cropImage = (imageDataUrl: string, bbox: BBox): Promise<string> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = bbox.width;
-      canvas.height = bbox.height;
-      const ctx = canvas.getContext("2d")!;
-      // Draw the region of interest
-      ctx.drawImage(img, bbox.x, bbox.y, bbox.width, bbox.height, 0, 0, bbox.width, bbox.height);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.src = imageDataUrl;
-  });
-};
-
-const overlayPatch = (originalDataUrl: string, patchDataUrl: string, bbox: BBox): Promise<string> => {
-  return new Promise((resolve) => {
-    const origImg = new Image();
-    origImg.onload = () => {
-      const patchImg = new Image();
-      patchImg.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = origImg.width;
-        canvas.height = origImg.height;
-        const ctx = canvas.getContext("2d")!;
-        // Draw original full image
-        ctx.drawImage(origImg, 0, 0);
-
-        // Before drawing the patch, we need to apply blending/feathering if possible
-        // but for now we draw the direct patch over the coordinates
-        ctx.drawImage(patchImg, bbox.x, bbox.y, bbox.width, bbox.height);
-
-        resolve(canvas.toDataURL("image/jpeg", 0.90));
-      };
-      patchImg.src = patchDataUrl;
-    };
-    origImg.src = originalDataUrl;
-  });
-};
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -254,38 +166,8 @@ const overlayPatch = (originalDataUrl: string, patchDataUrl: string, bbox: BBox)
 export const simulateAngle = async (
   originalDataUrl: string,
   compositeDataUrl: string,
-  angle: SimulationAngle,
-  rawDrawingDataUrl?: string // Optional for backwards compatibility during transition
+  angle: SimulationAngle
 ): Promise<string> => {
-  // Try the new Patch Approach if drawing data is provided
-  if (rawDrawingDataUrl) {
-    console.log(`[Gemini] Attempting Patch Cropping Strategy for ${angle}...`);
-    const bbox = await extractBoundingBox(rawDrawingDataUrl);
-
-    if (bbox) {
-      console.log(`[Gemini] Extracted bbox:`, bbox);
-      const croppedOriginal = await cropImage(originalDataUrl, bbox);
-      const croppedAnnotated = await cropImage(compositeDataUrl, bbox);
-
-      const compressedOriginalPatch = await compressImage(croppedOriginal, 1536, 0.90);
-      const compressedAnnotatedPatch = await compressImage(croppedAnnotated, 1536, 0.95);
-
-      const patchResult = await callGeminiTwoImages(
-        compressedOriginalPatch,
-        compressedAnnotatedPatch,
-        PROMPTS[angle],
-        `simulate-patch-${angle}`,
-        0.8
-      );
-
-      // Re-overlay the patched region back onto the full high-res original
-      return await overlayPatch(originalDataUrl, patchResult, bbox);
-    } else {
-      console.warn(`[Gemini] No mask detected in drawing for ${angle}, falling back to full image.`);
-    }
-  }
-
-  // Fallback to old full-image approach
   const compressedOriginal = await compressImage(originalDataUrl, 1536, 0.90);
   const compressedAnnotated = await compressImage(compositeDataUrl, 1536, 0.95);
   return await callGeminiTwoImages(

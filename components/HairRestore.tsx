@@ -109,10 +109,9 @@ const HairRestore: React.FC = () => {
     for (const angle of activeAngles) {
       const original = angleImages[angle]!;
       const composite = drawings[angle].compositeDataUrl!;
-      const rawDrawing = drawings[angle].drawingDataUrl!;
 
       try {
-        const image = await simulateAngle(original, composite, angle, rawDrawing);
+        const image = await simulateAngle(original, composite, angle);
         setResults((prev) =>
           prev.map((r) =>
             r.angle === angle

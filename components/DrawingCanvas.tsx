@@ -5,8 +5,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   photoDataUrl,
   onDrawingComplete,
   width: displayWidth = 500,
-  brushColor = 'rgba(255, 0, 0, 1)',
-  initialBrushSize = 6,
+  brushColor = 'rgba(255, 0, 0, 0.5)', // Semi-transparent red for masking
+  initialBrushSize = 20, // Larger brush for painting areas
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -198,8 +198,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             </span>
             <input
               type="range"
-              min="2"
-              max="20"
+              min="5"
+              max="60"
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
               className="flex-1 accent-[#57BEB7]"
@@ -219,11 +219,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           <div className="flex gap-2">
             <button
               onClick={() => setIsEraser(!isEraser)}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${
-                isEraser
-                  ? 'bg-[#1D4998] text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`flex-1 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all ${isEraser
+                ? 'bg-[#1D4998] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               {isEraser ? 'Borracha Ativa' : 'Borracha'}
             </button>

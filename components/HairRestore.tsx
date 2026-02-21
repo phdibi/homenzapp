@@ -172,13 +172,12 @@ const HairRestore: React.FC = () => {
             <React.Fragment key={step.label}>
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
-                    done
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${done
                       ? 'bg-[#57BEB7] text-white'
                       : isCurrent
-                      ? 'bg-[#1D4998] text-white shadow-md'
-                      : 'bg-gray-200 text-gray-400'
-                  }`}
+                        ? 'bg-[#1D4998] text-white shadow-md'
+                        : 'bg-gray-200 text-gray-400'
+                    }`}
                 >
                   {done ? (
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,18 +188,16 @@ const HairRestore: React.FC = () => {
                   )}
                 </div>
                 <span
-                  className={`text-[8px] font-bold uppercase tracking-wider ${
-                    isCurrent ? 'text-[#1D4998]' : done ? 'text-[#57BEB7]' : 'text-gray-300'
-                  }`}
+                  className={`text-[8px] font-bold uppercase tracking-wider ${isCurrent ? 'text-[#1D4998]' : done ? 'text-[#57BEB7]' : 'text-gray-300'
+                    }`}
                 >
                   {step.label}
                 </span>
               </div>
               {i < STEP_LABELS.length - 1 && (
                 <div
-                  className={`flex-1 h-0.5 rounded-full mt-[-12px] ${
-                    i < active ? 'bg-[#57BEB7]' : 'bg-gray-200'
-                  }`}
+                  className={`flex-1 h-0.5 rounded-full mt-[-12px] ${i < active ? 'bg-[#57BEB7]' : 'bg-gray-200'
+                    }`}
                 />
               )}
             </React.Fragment>
@@ -286,10 +283,10 @@ const HairRestore: React.FC = () => {
             <div className="space-y-5 animate-fade-in">
               <div className="text-center space-y-1">
                 <p className="text-sm font-bold text-[#1D4998]">
-                  Desenhe a linha da hairline desejada
+                  Pinte toda a area onde deseja adicionar cabelo
                 </p>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">
-                  Trace uma linha vermelha onde a nova hairline deve ficar — o cabelo sera preenchido a partir dela
+                  Preencha completamente a area calva com a cor vermelha — o cabelo sera gerado exatamente sobre a marcacao
                 </p>
               </div>
 
@@ -303,11 +300,10 @@ const HairRestore: React.FC = () => {
                     <button
                       key={angle}
                       onClick={() => setActiveDrawingAngle(angle)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                        isActive
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${isActive
                           ? 'bg-[#1D4998] text-white shadow-md'
                           : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       {ANGLE_CONFIG[angle].label}
                       {hasDraw && (

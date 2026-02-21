@@ -109,8 +109,10 @@ const HairRestore: React.FC = () => {
     for (const angle of activeAngles) {
       const original = angleImages[angle]!;
       const composite = drawings[angle].compositeDataUrl!;
+      const rawDrawing = drawings[angle].drawingDataUrl!;
+
       try {
-        const image = await simulateAngle(original, composite, angle);
+        const image = await simulateAngle(original, composite, angle, rawDrawing);
         setResults((prev) =>
           prev.map((r) =>
             r.angle === angle
@@ -173,10 +175,10 @@ const HairRestore: React.FC = () => {
               <div className="flex flex-col items-center gap-1">
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${done
-                      ? 'bg-[#57BEB7] text-white'
-                      : isCurrent
-                        ? 'bg-[#1D4998] text-white shadow-md'
-                        : 'bg-gray-200 text-gray-400'
+                    ? 'bg-[#57BEB7] text-white'
+                    : isCurrent
+                      ? 'bg-[#1D4998] text-white shadow-md'
+                      : 'bg-gray-200 text-gray-400'
                     }`}
                 >
                   {done ? (
@@ -301,8 +303,8 @@ const HairRestore: React.FC = () => {
                       key={angle}
                       onClick={() => setActiveDrawingAngle(angle)}
                       className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${isActive
-                          ? 'bg-[#1D4998] text-white shadow-md'
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        ? 'bg-[#1D4998] text-white shadow-md'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
                     >
                       {ANGLE_CONFIG[angle].label}

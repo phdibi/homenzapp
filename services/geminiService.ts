@@ -158,6 +158,94 @@ const callGeminiTwoImages = async (
   throw new Error("Modelo nao retornou imagem — tente novamente");
 };
 
+// --- Image Processing Utilities for the Patch Approach ---
+
+interface BBox { x: number; y: number; width: number; height: number; }
+
+const extractBoundingBox = (drawingDataUrl: string, padding = 40): Promise<BBox | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+      let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+      let hasPixels = false;
+
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] > 0) { // Alpha channel > 0 indicates drawing
+          hasPixels = true;
+          const pixelIndex = i / 4;
+          const x = pixelIndex % canvas.width;
+          const y = Math.floor(pixelIndex / canvas.width);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+
+      if (!hasPixels) {
+        resolve(null);
+        return;
+      }
+
+      const x = Math.max(0, minX - padding);
+      const y = Math.max(0, minY - padding * 2); // extra padding on top for hair height
+      const width = Math.min(canvas.width - x, maxX - minX + padding * 2);
+      const height = Math.min(canvas.height - y, maxY - minY + padding * 2);
+
+      resolve({ x, y, width, height });
+    };
+    img.src = drawingDataUrl;
+  });
+};
+
+const cropImage = (imageDataUrl: string, bbox: BBox): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = bbox.width;
+      canvas.height = bbox.height;
+      const ctx = canvas.getContext("2d")!;
+      // Draw the region of interest
+      ctx.drawImage(img, bbox.x, bbox.y, bbox.width, bbox.height, 0, 0, bbox.width, bbox.height);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.src = imageDataUrl;
+  });
+};
+
+const overlayPatch = (originalDataUrl: string, patchDataUrl: string, bbox: BBox): Promise<string> => {
+  return new Promise((resolve) => {
+    const origImg = new Image();
+    origImg.onload = () => {
+      const patchImg = new Image();
+      patchImg.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = origImg.width;
+        canvas.height = origImg.height;
+        const ctx = canvas.getContext("2d")!;
+        // Draw original full image
+        ctx.drawImage(origImg, 0, 0);
+
+        // Before drawing the patch, we need to apply blending/feathering if possible
+        // but for now we draw the direct patch over the coordinates
+        ctx.drawImage(patchImg, bbox.x, bbox.y, bbox.width, bbox.height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.90));
+      };
+      patchImg.src = patchDataUrl;
+    };
+    origImg.src = originalDataUrl;
+  });
+};
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -166,15 +254,45 @@ const callGeminiTwoImages = async (
 export const simulateAngle = async (
   originalDataUrl: string,
   compositeDataUrl: string,
-  angle: SimulationAngle
+  angle: SimulationAngle,
+  rawDrawingDataUrl?: string // Optional for backwards compatibility during transition
 ): Promise<string> => {
+  // Try the new Patch Approach if drawing data is provided
+  if (rawDrawingDataUrl) {
+    console.log(`[Gemini] Attempting Patch Cropping Strategy for ${angle}...`);
+    const bbox = await extractBoundingBox(rawDrawingDataUrl);
+
+    if (bbox) {
+      console.log(`[Gemini] Extracted bbox:`, bbox);
+      const croppedOriginal = await cropImage(originalDataUrl, bbox);
+      const croppedAnnotated = await cropImage(compositeDataUrl, bbox);
+
+      const compressedOriginalPatch = await compressImage(croppedOriginal, 1536, 0.90);
+      const compressedAnnotatedPatch = await compressImage(croppedAnnotated, 1536, 0.95);
+
+      const patchResult = await callGeminiTwoImages(
+        compressedOriginalPatch,
+        compressedAnnotatedPatch,
+        PROMPTS[angle],
+        `simulate-patch-${angle}`,
+        0.8
+      );
+
+      // Re-overlay the patched region back onto the full high-res original
+      return await overlayPatch(originalDataUrl, patchResult, bbox);
+    } else {
+      console.warn(`[Gemini] No mask detected in drawing for ${angle}, falling back to full image.`);
+    }
+  }
+
+  // Fallback to old full-image approach
   const compressedOriginal = await compressImage(originalDataUrl, 1536, 0.90);
   const compressedAnnotated = await compressImage(compositeDataUrl, 1536, 0.95);
   return await callGeminiTwoImages(
     compressedOriginal,
     compressedAnnotated,
     PROMPTS[angle],
-    `simulate-${angle}`,
+    `simulate-full-${angle}`,
     0.8
   );
 };

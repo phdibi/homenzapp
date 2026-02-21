@@ -66,33 +66,31 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 // ---------------------------------------------------------------------------
 
 const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `I am providing TWO images of the same person's face.
-Image 1: The original, clean photo.
-Image 2: The exact same photo, but with a solid RED MASK painted on the forehead.
+  frontal: `I am providing TWO images of the same person.
+Image 1: The patient's photo. We have already painted a crude dark base layer EXACTLY where the new hair must go.
+Image 2: The same photo with a RED MASK highlighting this exact target area.
 
-YOUR TASK: Edit Image 1 to add hair, strictly guided by the RED MASK from Image 2.
+YOUR TASK: Texturize and detail the crude dark base layer in Image 1 into photorealistic, natural hair.
 
-CRITICAL INSTRUCTIONS:
-1. PIXEL-PERFECT REPLACEMENT: Treat the RED MASK as a definitive stencil. You MUST replace EVERY SINGLE RED PIXEL with dense, natural-looking hair. 
-2. IGNORE ANATOMY: Do not attempt to guess where the "natural" hairline should be. Ignore standard facial proportions. If the red mask is drawn aggressively low on the forehead, the new hair MUST go exactly that low.
-3. NO BALD GAPS: The entire area between the existing hair on top and the very bottom edge of the red mask must be completely filled with thick hair. The red shape dictates the exact boundaries.
-4. PHOTOREALISM: Despite the strict shape constraints, the generated hair must look like a perfectly blended, natural extension of the patient's existing hair (match color, lighting, texture).
-5. ISOLATION: Do not alter the eyes, skin below the red mask, background, or clothing.
+CRITICAL RULES:
+1. MAXIMIZE DENSITY: Fill the entire masked area with thick, dense hair. No skin should be visible in this zone.
+2. DO NOT SHRINK: The dark base layer in Image 1 shows the exact mandatory boundaries. You MUST transform 100% of this dark area into dense hair. Do not recede the hairline or replace any of the dark area with skin.
+3. PHOTOREALISM: Make the generated hair perfectly match the patient's existing hair color, texture, and lighting. Blend the edges seamlessly into the existing hair and forehead skin. Do not alter the face, eyes, or background.
 
 Output ONLY one photorealistic photo based on Image 1 with the hair added. No text. No labels. No split view.`,
 
-  top: `I am providing TWO images of the same person's scalp from above.
-Image 1: The original, clean photo.
-Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask for a hair transplant.
+  top: `I am providing TWO images of the patient's scalp.
+Image 1: The crown/scalp photo. We have already painted a crude dark base layer EXACTLY where the new hair must go.
+Image 2: The same photo with a RED MASK highlighting this exact target area.
 
-YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
+YOUR TASK: Texturize and detail the crude dark base layer in Image 1 into photorealistic, natural hair.
 
 CRITICAL RULES:
-1. STRICT SPATIAL ACCURACY: Analyze exactly where the red markings are located in Image 2. Add new dense hair ONLY within these explicitly marked zones to cover the visible scalp. Do not add hair outside these areas.
-2. DENSITY & BLENDING: Fill the marked area completely so no scalp is visible. Match the existing hair color, texture, and natural crown growth direction (whorl).
-3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all other parts of the head, ears, neck, body, and background 100% identical to Image 1.
+1. EXTREME DENSITY: You must generate EXTREMELY THICK, DENSE hair over the entire masked area. Absolutely NO SCALP skin should be visible beneath the new hair in the red zone.
+2. PRESERVE BOUNDARIES: Transform 100% of the dark base layer into hair. Do not shrink the coverage area. Match the exact perimeter of the mask.
+3. PHOTOREALISM: Match the natural existing hair color, texture, and crown growth pattern (whorl). Keep the unmasked areas, ears, neck, and clothing 100% identical to Image 1.
 
-The red marks are an ABSOLUTE BOUNDARY. Fill the area within the red marks densely. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
+Output ONLY one photorealistic photo based on Image 1 with the hair added. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -190,12 +188,12 @@ const applyHairBaseTexture = (originalDataUrl: string, rawDrawingDataUrl: string
         for (let i = 0; i < pixels.length; i += 4) {
           // If mask has any alpha (meaning it was drawn on)
           if (maskData[i + 3] > 0) {
-            // Apply a dark brown base with some noise for texture
+            // Apply a very dark brown/black base with some noise for texture
             const noise = (Math.random() - 0.5) * 35;
-            // Base shadow color: ~ #33261f
-            pixels[i] = Math.min(255, Math.max(0, 51 + noise));     // R
-            pixels[i + 1] = Math.min(255, Math.max(0, 38 + noise)); // G
-            pixels[i + 2] = Math.min(255, Math.max(0, 31 + noise)); // B
+            // Base shadow color: ~ #2c2019
+            pixels[i] = Math.min(255, Math.max(0, 44 + noise));     // R
+            pixels[i + 1] = Math.min(255, Math.max(0, 32 + noise)); // G
+            pixels[i + 2] = Math.min(255, Math.max(0, 25 + noise)); // B
           }
         }
 
@@ -222,9 +220,9 @@ export const simulateAngle = async (
 
   let finalOriginalUrl = originalDataUrl;
 
-  // Apply the pre-fill hair silhouette bypass specifically to the frontal view to defeat guardrails
-  if (angle === 'frontal' && rawDrawingDataUrl) {
-    console.log(`[Gemini] Applying pre-fill hair base texture for frontal view...`);
+  // Apply the pre-fill hair silhouette bypass to ALL views to force dense coverage
+  if (rawDrawingDataUrl) {
+    console.log(`[Gemini] Applying pre-fill hair base texture for ${angle} view...`);
     finalOriginalUrl = await applyHairBaseTexture(originalDataUrl, rawDrawingDataUrl);
   }
 

@@ -1,8 +1,10 @@
 /**
- * Hair Transplant Simulation Service — v5.3 (Hairline Drawing)
+ * Hair Transplant Simulation Service — v5.4 (Two-Image Approach)
  *
- * User draws a RED LINE on the photo indicating the desired hairline position.
- * Model fills hair from that line upward/inward and harmonizes in one shot.
+ * Sends TWO images per request:
+ *   Image 1: original clean photo
+ *   Image 2: same photo with red markings drawn by the user
+ * The prompt tells the model to compare them and add hair where marked.
  *
  * Uses Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
  */
@@ -60,57 +62,54 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 };
 
 // ---------------------------------------------------------------------------
-// Prompts — hairline drawing approach
+// Prompts — two-image approach (original + annotated)
 // ---------------------------------------------------------------------------
 
 const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Edit this photo. A hair transplant surgeon has drawn a RED LINE on the person's forehead/scalp. This red line marks the desired NEW HAIRLINE position after a hair transplant.
+  frontal: `I am providing TWO images of the same person's face.
+Image 1: The original, clean photo.
+Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask tracking where a hair transplant should happen.
 
-DO THIS:
-1. Look at the RED LINE drawn on the photo — that is where the new hairline must be
-2. REMOVE the red line completely from the image
-3. Create a dense, natural hairline exactly where the red line was drawn
-4. Fill ALL the area between the red line and the existing hair with thick, dense hair
-5. The new hair must match the person's existing hair color, texture, and growth direction exactly
-6. Blend the new hair seamlessly with existing hair — no visible transition, no patches
-7. The result must look like the person naturally has a full head of hair with the hairline at the drawn position
-8. Do NOT change face, skin, ears, eyebrows, beard, clothing, background — ONLY add hair
+YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
 
-Be AGGRESSIVE with the hairline — make it low, dense, and natural. This is a hair transplant simulation and the patient wants to see a dramatic improvement.
+CRITICAL RULES:
+1. STRICT SPATIAL ACCURACY: The red markings in Image 2 represent the EXACT limits of the new hairline. You MUST NOT add hair below these red lines or anywhere outside the marked boundaries.
+2. FILL THE AREA: Fill the bald areas located between the existing hair and the new red hairline with dense, thick, natural-looking hair.
+3. PERFECT BLENDING: The new hair must perfectly match the patient's existing hair color, texture, lighting, and growth direction. Seamlessly blend into the existing hair.
+4. ISOLATED EDITS: Keep the face, forehead texture below the line, eyebrows, skin, background, and clothing 100% identical to Image 1.
 
-Output one photorealistic photo. No text. No labels. No split view.`,
+The red lines are an ABSOLUTE BOUNDARY. Be bold and dense inside the area, but strictly respect the limits. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
 
-  top: `Edit this photo. A hair transplant surgeon has drawn RED LINES on the person's scalp viewed from above. These red lines mark the areas where hair must be added after a hair transplant.
+  top: `I am providing TWO images of the same person's scalp from above.
+Image 1: The original, clean photo.
+Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask for a hair transplant.
 
-DO THIS:
-1. Look at the RED LINES drawn on the scalp — they mark where new hair must grow
-2. REMOVE all red lines completely from the image
-3. Fill the marked areas and everything between them with thick, dense hair
-4. The new hair must follow the natural growth direction radiating from the crown whorl
-5. Match the person's existing hair color and texture exactly
-6. Eliminate any visible scalp in the areas between the red lines and existing hair
-7. Blend everything seamlessly — the result must look like a naturally full head of hair from above
-8. Do NOT change ears, neck, background — ONLY add hair
+YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
 
-Be AGGRESSIVE — fill generously, no scalp should be visible in marked areas.
+CRITICAL RULES:
+1. STRICT SPATIAL ACCURACY: Analyze exactly where the red markings are located in Image 2. Add new dense hair ONLY within these explicitly marked zones to cover the visible scalp. Do not add hair outside these areas.
+2. DENSITY & BLENDING: Fill the marked area completely so no scalp is visible. Match the existing hair color, texture, and natural crown growth direction (whorl).
+3. ISOLATED EDITS: Only modify the areas indicated by the red lines. Keep all other parts of the head, ears, neck, body, and background 100% identical to Image 1.
 
-Output one photorealistic photo. No text. No labels. No split view.`,
+The red marks are an ABSOLUTE BOUNDARY. Fill the area within the red marks densely. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
-// Core: call Gemini with image + prompt
+// Core: call Gemini with TWO images + prompt
 // ---------------------------------------------------------------------------
 
-const callGeminiImage = async (
-  imageDataUrl: string,
+const callGeminiTwoImages = async (
+  originalDataUrl: string,
+  annotatedDataUrl: string,
   prompt: string,
   label: string,
   temperature = 0.8
 ): Promise<string> => {
-  console.log(`[Gemini] Processing ${label} (temp=${temperature})...`);
+  console.log(`[Gemini] Processing ${label} (temp=${temperature}, 2 images)...`);
   const start = Date.now();
 
-  const parsed = parseDataUrl(imageDataUrl);
+  const original = parseDataUrl(originalDataUrl);
+  const annotated = parseDataUrl(annotatedDataUrl);
 
   const response = await ai.models.generateContent({
     model: MODEL_ID,
@@ -118,8 +117,14 @@ const callGeminiImage = async (
       { text: prompt },
       {
         inlineData: {
-          mimeType: parsed.mimeType,
-          data: parsed.data,
+          mimeType: original.mimeType,
+          data: original.data,
+        },
+      },
+      {
+        inlineData: {
+          mimeType: annotated.mimeType,
+          data: annotated.data,
         },
       },
     ],
@@ -157,28 +162,37 @@ const callGeminiImage = async (
 // Public API
 // ---------------------------------------------------------------------------
 
-/** Simulate transplant: fill hair from drawn hairline + harmonize, single call */
+/** Simulate transplant: sends original + annotated photo, single call */
 export const simulateAngle = async (
+  originalDataUrl: string,
   compositeDataUrl: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  // High quality (0.95) to preserve red line visibility
-  const compressed = await compressImage(compositeDataUrl, 1536, 0.95);
-  return await callGeminiImage(compressed, PROMPTS[angle], `simulate-${angle}`, 0.8);
+  const compressedOriginal = await compressImage(originalDataUrl, 1536, 0.90);
+  const compressedAnnotated = await compressImage(compositeDataUrl, 1536, 0.95);
+  return await callGeminiTwoImages(
+    compressedOriginal,
+    compressedAnnotated,
+    PROMPTS[angle],
+    `simulate-${angle}`,
+    0.8
+  );
 };
 
 /** Run simulation for all provided angles sequentially */
 export const runSimulation = async (
+  originals: Record<SimulationAngle, string | null>,
   composites: Record<SimulationAngle, string | null>,
   onResult: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
 ): Promise<void> => {
   const angles: SimulationAngle[] = ['frontal', 'top'];
 
   for (const angle of angles) {
+    const original = originals[angle];
     const composite = composites[angle];
-    if (!composite) continue;
+    if (!original || !composite) continue;
     try {
-      const image = await simulateAngle(composite, angle);
+      const image = await simulateAngle(original, composite, angle);
       onResult(angle, { image });
     } catch (err: any) {
       console.error(`[${angle}] Erro:`, err);

@@ -73,12 +73,12 @@ Image 2: The exact same photo, but with RED MARKS defining a strict spatial mask
 YOUR TASK: Edit Image 1 to add hair, STRICTLY following the spatial boundaries defined by the RED MARKS in Image 2.
 
 CRITICAL RULES:
-1. STRICT SPATIAL ACCURACY: The red markings in Image 2 represent the EXACT limits of the new hairline. You MUST NOT add hair below these red lines or anywhere outside the marked boundaries.
-2. FILL THE AREA: Fill the bald areas located between the existing hair and the new red hairline with dense, thick, natural-looking hair.
+1. ABSOLUTE SPATIAL COMPLIANCE: The red mask is your EXACT template. You MUST fill the ENTIRE red area with thick hair. Do NOT stop short. The new hairline MUST go as low down the forehead as the lowest edge of the red mask. Overriding the mask because you think it is "too low" is FORBIDDEN.
+2. FILL THE ENTIRE AREA: Fill all bald areas located between the existing highest hair and the bottom-most edge of the red mask with dense, thick, natural-looking hair. Leave no bald spots inside the red zone.
 3. PERFECT BLENDING: The new hair must perfectly match the patient's existing hair color, texture, lighting, and growth direction. Seamlessly blend into the existing hair.
-4. ISOLATED EDITS: Keep the face, forehead texture below the line, eyebrows, skin, background, and clothing 100% identical to Image 1.
+4. ISOLATED EDITS: Keep the face, forehead texture BELOW the new hairline, eyebrows, skin, background, and clothing 100% identical to Image 1.
 
-The red lines are an ABSOLUTE BOUNDARY. Be bold and dense inside the area, but strictly respect the limits. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
+The red marks are an ABSOLUTE FILL ZONE. You must drag the hairline down to exactly match the bottom of the red shape. Output ONLY one photorealistic photo based on Image 1 with hair added. No text. No labels. No split view.`,
 
   top: `I am providing TWO images of the same person's scalp from above.
 Image 1: The original, clean photo.

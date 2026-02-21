@@ -1,16 +1,14 @@
 /**
- * Hair Transplant Simulation Service — v4 (Nano Banana Pro, prompt-only)
+ * Hair Transplant Simulation Service — v5 (Two-Step Pipeline)
+ *
+ * Step 1: Fill hair in drawn/marked areas (green overlay on photo)
+ * Step 2: Apply a selected hairstyle to the filled result
  *
  * Uses Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
- * No mask/drawing — the model receives a single photo + specialized prompt per angle.
- *
- * Public API:
- *   - simulateForAngle(photos, angle) → dataUrl
- *   - simulateAllAngles(photos, onResult) → void
  */
 
 import { GoogleGenAI } from "@google/genai";
-import type { SimulationAngle, AngleImageMap } from "../types";
+import type { SimulationAngle, HairstyleOption } from "../types";
 
 // ---------------------------------------------------------------------------
 // Gemini configuration
@@ -23,7 +21,6 @@ if (!GEMINI_API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
 const MODEL_ID = "gemini-3-pro-image-preview";
 
 // ---------------------------------------------------------------------------
@@ -56,7 +53,6 @@ const compressImage = (
   });
 };
 
-/** Strip data URL prefix → { mimeType, data } */
 const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
   const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
   if (!match) return { mimeType: "image/jpeg", data: dataUrl };
@@ -64,94 +60,159 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 };
 
 // ---------------------------------------------------------------------------
-// System preamble — shared across all angle prompts for consistency
+// Hairstyle options
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PREAMBLE = `You are a hair transplant surgeon generating a realistic FUE transplant simulation.
-
-YOUR GOAL: Add dense, thick hair ONLY to the specific areas affected by hair loss — the frontotemporal hairline and the crown. Be BOLD and AGGRESSIVE in these target zones. But do NOT touch any area that already has adequate hair coverage.
-
-TARGET ZONES (add hair here aggressively):
-- FRONTOTEMPORAL HAIRLINE: The receding hairline at the front and the temple corners (M-shape recession). Push the hairline forward significantly and fill the temple triangles with dense hair.
-- CROWN: Any thinning or bald spot at the top/back of the head. Fill it with dense coverage.
-
-FORBIDDEN ZONES (do NOT add hair here):
-- The sides of the head (above the ears) where hair already exists
-- The back of the head where hair already exists
-- Any area that already has normal hair density
-
-STRICT RULES:
-- ONLY add hair where there is clearly visible scalp due to hair loss
-- Match the person's existing hair color, texture, curl pattern, and growth direction EXACTLY
-- Create a natural, slightly irregular new hairline with baby hairs — never a sharp artificial line
-- PRESERVE the person's face, skin, ears, eyebrows, beard, clothing, background IDENTICALLY
-- DO NOT alter the image composition, lighting, or color grading
-- The result must look like a real photograph, photorealistic, no artifacts
-`;
+export const HAIRSTYLE_OPTIONS: HairstyleOption[] = [
+  {
+    id: 'side_part',
+    label: 'Repartido Lateral',
+    description: 'Corte classico com repartido lateral definido',
+    promptFragment: 'a classic side part with clean separation, hair combed neatly to one side with volume on top and shorter on the sides',
+  },
+  {
+    id: 'slick_back',
+    label: 'Slick Back',
+    description: 'Cabelo penteado para tras com brilho',
+    promptFragment: 'a sleek slicked-back style with all hair combed backwards, smooth and polished with a slight shine, shorter and tapered on the sides',
+  },
+  {
+    id: 'textured_crop',
+    label: 'Textured Crop',
+    description: 'Corte curto texturizado moderno',
+    promptFragment: 'a modern textured crop with short messy fringe at the front, textured layers on top, faded shorter sides',
+  },
+  {
+    id: 'buzz_cut',
+    label: 'Buzz Cut',
+    description: 'Corte maquina uniforme curto',
+    promptFragment: 'a clean uniform buzz cut, very short (about 3mm) all over, neat and even with visible scalp texture',
+  },
+  {
+    id: 'messy_textured',
+    label: 'Texturizado Casual',
+    description: 'Estilo casual com textura e movimento',
+    promptFragment: 'a casual messy textured style with tousled layers, natural movement and volume on top, relaxed effortless look',
+  },
+  {
+    id: 'pompadour',
+    label: 'Pompadour',
+    description: 'Volume alto na frente penteado para tras',
+    promptFragment: 'a modern pompadour with significant volume and height at the front, swept upward and backward, clean tapered sides',
+  },
+  {
+    id: 'crew_cut',
+    label: 'Crew Cut',
+    description: 'Corte militar curto classico',
+    promptFragment: 'a classic crew cut with slightly longer top graduated shorter toward the crown, very short faded sides, clean and neat military style',
+  },
+  {
+    id: 'natural_flow',
+    label: 'Natural Fluido',
+    description: 'Cabelo com fluxo natural medio',
+    promptFragment: 'a natural flowing medium-length style, hair falling naturally with soft movement, no rigid styling, relaxed and organic look',
+  },
+];
 
 // ---------------------------------------------------------------------------
-// Per-angle prompts — bold on target zones, strict on preservation
+// Step 1 prompts — Hair Fill (green markings → hair)
 // ---------------------------------------------------------------------------
 
-const PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `${SYSTEM_PREAMBLE}
-This is a FRONTAL photo. Simulate the transplant result:
+const STEP1_PREAMBLE = `You are a hair transplant surgeon's digital assistant.
+The patient's photo has been annotated by the surgeon with BRIGHT GREEN semi-transparent markings.
+These green markings indicate EXACTLY where new hair follicles must be transplanted.
 
-1. HAIRLINE: Bring the hairline DOWN aggressively — create a new, lower, denser hairline. Fill the forehead recession boldly. The new hairline should have natural baby hairs at the edges but should clearly be much lower and denser than the current one.
-2. TEMPLE CORNERS: The M-shape recession at both temples must be filled with dense hair. These triangle areas should have significant new hair coverage, closing the M-shape substantially.
-3. CROWN/TOP: If any thinning is visible on top, add dense coverage to eliminate visible scalp in that zone.
+YOUR TASK: Generate the post-transplant result photo by adding dense, natural hair IN AND ONLY IN the areas marked with green color.
 
-IMPORTANT: Only add hair to areas of visible hair loss. Do NOT add hair to the sides or any area that already has normal coverage. The sides, ears, face, and all other features remain IDENTICAL.
+CRITICAL RULES FOR GREEN MARKINGS:
+- Every area with green marking MUST have dense new hair in the output
+- Areas WITHOUT green marking must remain COMPLETELY UNCHANGED
+- The green markings themselves must NOT appear in the output — replace them entirely with natural-looking hair
+- The green color is a surgical annotation tool, NOT part of the final image
 
-Output a single photorealistic photograph. No text, no labels, no side-by-side.`,
+HAIR QUALITY REQUIREMENTS:
+- Match the patient's existing hair color, texture, curl pattern, and growth direction EXACTLY
+- Create natural follicular unit density (40-60 FU/cm2) in marked areas
+- Edges of new hair zones must blend seamlessly with existing hair — no sharp lines
+- Add natural baby hairs at the hairline edge for realism
 
-  lateral_left: `${SYSTEM_PREAMBLE}
-This is a LEFT SIDE profile photo. Simulate the transplant result:
+PRESERVATION RULES:
+- Face, skin tone, ears, eyebrows, beard, clothing, background: IDENTICAL to input
+- Lighting, color grading, image composition: IDENTICAL to input
+- Existing hair outside marked zones: do NOT change density, color, or style
+- Output: single photorealistic photograph, no text, no labels, no side-by-side`;
 
-1. FRONTOTEMPORAL HAIRLINE: The front hairline visible from this angle — push it FORWARD significantly toward the face. Where there is recession between the hairline and the forehead, fill it with dense hair. The hairline should start much further forward than it currently does.
-2. TEMPLE TRIANGLE: The triangular bare area between the front hairline and the ear — fill it with dense hair. This is the primary target zone from this angle. Close this gap with thick, natural-looking hair.
-3. TEMPLE POINT: Extend hair coverage in front of and above the ear to connect seamlessly with the sideburn area.
+const STEP1_PROMPTS: Record<SimulationAngle, string> = {
+  frontal: `${STEP1_PREAMBLE}
 
-IMPORTANT: Only add hair to the frontotemporal recession zone. Do NOT add hair to the sides or back where hair already exists. The ear, face, jaw, beard, neck, clothing remain IDENTICAL. Do NOT add extra volume or density to areas that already have normal hair.
+This is a FRONTAL photo with green surgical markings.
+The green areas indicate where the surgeon plans to transplant hair.
+Look carefully at where the green color appears — those are your ONLY target zones.
 
-Output a single photorealistic photograph. No text, no labels.`,
+For each green-marked area:
+- HAIRLINE region (if marked): create a natural, lower hairline with the density of healthy hair
+- TEMPLE CORNERS (if marked): fill the M-shape recession triangles with dense hair
+- CROWN/TOP (if marked): cover any visible scalp with dense hair growth
 
-  lateral_right: `${SYSTEM_PREAMBLE}
-This is a RIGHT SIDE profile photo. Simulate the transplant result:
+Remove ALL green color from the output and replace it with photorealistic hair.
+Output a single photorealistic photograph.`,
 
-1. FRONTOTEMPORAL HAIRLINE: The front hairline visible from this angle — push it FORWARD significantly toward the face. Where there is recession between the hairline and the forehead, fill it with dense hair. The hairline should start much further forward than it currently does.
-2. TEMPLE TRIANGLE: The triangular bare area between the front hairline and the ear — fill it with dense hair. This is the primary target zone from this angle. Close this gap with thick, natural-looking hair.
-3. TEMPLE POINT: Extend hair coverage in front of and above the ear to connect seamlessly with the sideburn area.
+  top: `${STEP1_PREAMBLE}
 
-IMPORTANT: Only add hair to the frontotemporal recession zone. Do NOT add hair to the sides or back where hair already exists. Do NOT add extra volume, thickness, or density to areas that already have normal hair coverage — only fill the recession. The ear, face, jaw, beard, neck, clothing remain IDENTICAL.
+This is a TOP-DOWN scalp photo with green surgical markings.
+The green areas indicate where the surgeon plans to transplant hair.
+Look carefully at where the green color appears — those are your ONLY target zones.
 
-Output a single photorealistic photograph. No text, no labels.`,
+For each green-marked area:
+- CROWN (if marked): fill with dense hair following the natural whorl growth pattern
+- MID-SCALP (if marked): add dense coverage radiating outward from the crown
+- FRONTAL ZONE (if marked): add thick forward-growing coverage
 
-  top: `${SYSTEM_PREAMBLE}
-This is a TOP-DOWN photo of the scalp. Simulate the transplant result:
-
-1. CROWN: If there is thinning or a bald spot at the crown, fill it AGGRESSIVELY with dense hair. Eliminate visible scalp in this zone. This is the primary target from this angle.
-2. MID-SCALP: If scalp is visible through thinning hair in the middle zone, add dense coverage to eliminate the transparency.
-3. FRONTAL ZONE: If the frontal area shows thinning from above, add thick coverage extending forward to recreate a dense frontal hairline.
-
-IMPORTANT: Only add hair where scalp is visibly showing through due to hair loss. Maintain the natural growth direction pattern (radiating outward from the whorl). Do NOT add density to areas that already have normal coverage.
-
-Output a single photorealistic photograph. No text, no labels.`,
+Remove ALL green color from the output and replace it with photorealistic hair.
+Maintain natural hair growth direction (radiating from whorl).
+Output a single photorealistic photograph.`,
 };
 
 // ---------------------------------------------------------------------------
-// Core: call Nano Banana Pro with single image + prompt
+// Step 2 prompts — Hairstyle application
 // ---------------------------------------------------------------------------
 
-const callNanoBananaPro = async (
-  photo: string,
-  angle: SimulationAngle
+const STEP2_PREAMBLE = `You are a professional hair stylist creating a styled look.
+The person in this photo has a full head of hair. Your task is to restyle their hair into a specific hairstyle while preserving everything else in the image EXACTLY.
+
+STYLING RULES:
+- Change ONLY the hair styling — do not add or remove hair volume/density
+- The hair color, texture, and quality remain the same — only the arrangement/direction changes
+- Face, skin, ears, eyebrows, beard, clothing, background: IDENTICAL
+- Lighting and image quality: IDENTICAL
+- Result must look like a real photograph of a person with this hairstyle`;
+
+const buildStep2Prompt = (angle: SimulationAngle, hairstyle: HairstyleOption): string => {
+  const angleContext = angle === 'frontal'
+    ? 'This is a FRONTAL photo.'
+    : 'This is a TOP-DOWN photo.';
+
+  return `${STEP2_PREAMBLE}
+
+${angleContext}
+Style the person's hair into: ${hairstyle.label} — ${hairstyle.promptFragment}
+
+Output a single photorealistic photograph. No text, no labels.`;
+};
+
+// ---------------------------------------------------------------------------
+// Core: call Gemini with image + prompt
+// ---------------------------------------------------------------------------
+
+const callGeminiImage = async (
+  imageDataUrl: string,
+  prompt: string,
+  label: string
 ): Promise<string> => {
-  console.log(`[NanaBananaPro] Processing ${angle}...`);
+  console.log(`[Gemini] Processing ${label}...`);
   const start = Date.now();
 
-  const parsed = parseDataUrl(photo);
-  const prompt = PROMPTS[angle];
+  const parsed = parseDataUrl(imageDataUrl);
 
   const response = await ai.models.generateContent({
     model: MODEL_ID,
@@ -171,7 +232,7 @@ const callNanoBananaPro = async (
   });
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[NanaBananaPro] ${angle} done in ${elapsed}s`);
+  console.log(`[Gemini] ${label} done in ${elapsed}s`);
 
   const parts = response?.candidates?.[0]?.content?.parts;
   if (!parts) {
@@ -187,7 +248,7 @@ const callNanoBananaPro = async (
 
   for (const part of parts) {
     if ((part as any).text) {
-      console.warn(`[NanaBananaPro] Text instead of image:`, (part as any).text);
+      console.warn(`[Gemini] Text instead of image (${label}):`, (part as any).text);
     }
   }
 
@@ -198,35 +259,58 @@ const callNanoBananaPro = async (
 // Public API
 // ---------------------------------------------------------------------------
 
-export const simulateForAngle = async (
-  angleImages: AngleImageMap,
+/** Step 1: Fill hair in drawn/marked areas */
+export const step1FillHair = async (
+  compositeDataUrl: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  const photo = angleImages[angle];
-  if (!photo) throw new Error(`Sem foto para o angulo: ${angle}`);
-
-  const compressed = await compressImage(photo);
-  return await callNanoBananaPro(compressed, angle);
+  const compressed = await compressImage(compositeDataUrl);
+  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`);
 };
 
-export const simulateAllAngles = async (
-  angleImages: AngleImageMap,
-  onResult: (
-    angle: SimulationAngle,
-    result: { image?: string; error?: string }
-  ) => void
-): Promise<void> => {
-  const angles: SimulationAngle[] = ["frontal", "lateral_left", "lateral_right", "top"];
-  const activeAngles = angles.filter((a) => angleImages[a] !== null);
+/** Step 2: Apply hairstyle to a filled result */
+export const step2ApplyHairstyle = async (
+  filledImageDataUrl: string,
+  angle: SimulationAngle,
+  hairstyle: HairstyleOption
+): Promise<string> => {
+  const compressed = await compressImage(filledImageDataUrl);
+  const prompt = buildStep2Prompt(angle, hairstyle);
+  return await callGeminiImage(compressed, prompt, `step2-${angle}-${hairstyle.id}`);
+};
 
-  // Sequential to avoid rate limiting
-  for (const angle of activeAngles) {
+/** Run both steps sequentially for all provided angles */
+export const runFullPipeline = async (
+  composites: Record<SimulationAngle, string | null>,
+  hairstyle: HairstyleOption,
+  onStep1Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void,
+  onStep2Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
+): Promise<void> => {
+  const angles: SimulationAngle[] = ['frontal', 'top'];
+  const step1Results: Partial<Record<SimulationAngle, string>> = {};
+
+  // Step 1: fill hair for each angle
+  for (const angle of angles) {
+    const composite = composites[angle];
+    if (!composite) continue;
     try {
-      const image = await simulateForAngle(angleImages, angle);
-      onResult(angle, { image });
+      const image = await step1FillHair(composite, angle);
+      step1Results[angle] = image;
+      onStep1Result(angle, { image });
     } catch (err: any) {
-      console.error(`[${angle}] Erro:`, err);
-      onResult(angle, { error: err?.message || "Erro desconhecido" });
+      onStep1Result(angle, { error: err?.message || 'Erro no preenchimento' });
+    }
+  }
+
+  // Step 2: apply hairstyle to successful step 1 results
+  for (const angle of angles) {
+    const filled = step1Results[angle];
+    if (!filled) continue;
+    try {
+      const image = await step2ApplyHairstyle(filled, angle, hairstyle);
+      onStep2Result(angle, { image });
+    } catch (err: any) {
+      onStep2Result(angle, { error: err?.message || 'Erro no penteado' });
     }
   }
 };

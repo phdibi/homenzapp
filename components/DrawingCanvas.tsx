@@ -5,8 +5,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   photoDataUrl,
   onDrawingComplete,
   width: displayWidth = 500,
-  brushColor = 'rgba(0, 255, 0, 0.9)',
-  initialBrushSize = 30,
+  brushColor = 'rgba(255, 0, 0, 1)',
+  initialBrushSize = 6,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -198,8 +198,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             </span>
             <input
               type="range"
-              min="5"
-              max="60"
+              min="2"
+              max="20"
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
               className="flex-1 accent-[#57BEB7]"

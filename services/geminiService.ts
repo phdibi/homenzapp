@@ -1,8 +1,8 @@
 /**
- * Hair Transplant Simulation Service — v5 (Two-Step Pipeline)
+ * Hair Transplant Simulation Service — v5.3 (Hairline Drawing)
  *
- * Step 1: Fill hair in drawn/marked areas (green overlay on photo)
- * Step 2: Harmonize — blend new hair seamlessly with existing hair
+ * User draws a RED LINE on the photo indicating the desired hairline position.
+ * Model fills hair from that line upward/inward and harmonizes in one shot.
  *
  * Uses Gemini 3 Pro Image (Nano Banana Pro) via @google/genai SDK.
  */
@@ -60,65 +60,39 @@ const parseDataUrl = (dataUrl: string): { mimeType: string; data: string } => {
 };
 
 // ---------------------------------------------------------------------------
-// Step 1 prompts — Hair Fill (green markings → hair)
+// Prompts — hairline drawing approach
 // ---------------------------------------------------------------------------
 
-const STEP1_PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Edit this photo. The photo has BRIGHT GREEN painted areas on it. Those green areas are painted by a doctor to mark exactly where hair must grow.
+const PROMPTS: Record<SimulationAngle, string> = {
+  frontal: `Edit this photo. A hair transplant surgeon has drawn a RED LINE on the person's forehead/scalp. This red line marks the desired NEW HAIRLINE position after a hair transplant.
 
 DO THIS:
-1. Look at the image — find every green-colored region
-2. REMOVE the green paint completely
-3. REPLACE the green areas with dense, realistic hair — as if hair naturally grew there
-4. The hair you add must match the person's existing hair color, texture, and direction
-5. Do NOT change anything outside the green areas — face, skin, ears, existing hair, background stay identical
-6. Do NOT add hair anywhere that is NOT painted green
+1. Look at the RED LINE drawn on the photo — that is where the new hairline must be
+2. REMOVE the red line completely from the image
+3. Create a dense, natural hairline exactly where the red line was drawn
+4. Fill ALL the area between the red line and the existing hair with thick, dense hair
+5. The new hair must match the person's existing hair color, texture, and growth direction exactly
+6. Blend the new hair seamlessly with existing hair — no visible transition, no patches
+7. The result must look like the person naturally has a full head of hair with the hairline at the drawn position
+8. Do NOT change face, skin, ears, eyebrows, beard, clothing, background — ONLY add hair
 
-The green paint is the ONLY guide. Hair goes ONLY where green is. Everywhere else stays untouched.
+Be AGGRESSIVE with the hairline — make it low, dense, and natural. This is a hair transplant simulation and the patient wants to see a dramatic improvement.
 
 Output one photorealistic photo. No text. No labels. No split view.`,
 
-  top: `Edit this photo. The photo has BRIGHT GREEN painted areas on the scalp. Those green areas are painted by a doctor to mark exactly where hair must grow.
+  top: `Edit this photo. A hair transplant surgeon has drawn RED LINES on the person's scalp viewed from above. These red lines mark the areas where hair must be added after a hair transplant.
 
 DO THIS:
-1. Look at the image — find every green-colored region on the scalp
-2. REMOVE the green paint completely
-3. REPLACE the green areas with dense, realistic hair growing in natural directions from the crown whorl
-4. The hair you add must match the person's existing hair color and texture
-5. Do NOT change anything outside the green areas — existing hair, ears, neck, background stay identical
-6. Do NOT add hair anywhere that is NOT painted green
+1. Look at the RED LINES drawn on the scalp — they mark where new hair must grow
+2. REMOVE all red lines completely from the image
+3. Fill the marked areas and everything between them with thick, dense hair
+4. The new hair must follow the natural growth direction radiating from the crown whorl
+5. Match the person's existing hair color and texture exactly
+6. Eliminate any visible scalp in the areas between the red lines and existing hair
+7. Blend everything seamlessly — the result must look like a naturally full head of hair from above
+8. Do NOT change ears, neck, background — ONLY add hair
 
-The green paint is the ONLY guide. Hair goes ONLY where green is. Everywhere else stays untouched.
-
-Output one photorealistic photo. No text. No labels. No split view.`,
-};
-
-// ---------------------------------------------------------------------------
-// Step 2 prompts — Harmonize (blend new hair with existing)
-// ---------------------------------------------------------------------------
-
-const STEP2_PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `Improve this photo of a person's head. The person recently had a hair transplant and some areas of new hair may look slightly unnatural, patchy, or not fully blended with the existing hair.
-
-DO THIS:
-1. Make ALL the hair look completely natural and uniform — as if it always grew there
-2. Blend any transitions between new and old hair so there are no visible seams or density differences
-3. Ensure the hairline looks natural with soft edges and baby hairs
-4. Adjust hair density so it looks even and healthy across all areas
-5. Keep the same hair color, general length, and growth direction
-6. Do NOT change the face, skin, ears, eyebrows, beard, clothing, or background — ONLY improve the hair
-
-Output one photorealistic photo. No text. No labels. No split view.`,
-
-  top: `Improve this top-down photo of a person's scalp. The person recently had a hair transplant and some areas of new hair may look slightly unnatural, patchy, or not fully blended with the existing hair.
-
-DO THIS:
-1. Make ALL the hair look completely natural and uniform — as if it always grew there
-2. Blend any transitions between new and old hair so there are no visible seams or density differences
-3. Eliminate any visible scalp showing through in transplanted areas
-4. Ensure natural growth direction radiating from the crown whorl
-5. Keep the same hair color and general texture
-6. Do NOT change anything except the hair — ears, neck, background stay identical
+Be AGGRESSIVE — fill generously, no scalp should be visible in marked areas.
 
 Output one photorealistic photo. No text. No labels. No split view.`,
 };
@@ -131,7 +105,7 @@ const callGeminiImage = async (
   imageDataUrl: string,
   prompt: string,
   label: string,
-  temperature = 0.4
+  temperature = 0.8
 ): Promise<string> => {
   console.log(`[Gemini] Processing ${label} (temp=${temperature})...`);
   const start = Date.now();
@@ -183,57 +157,32 @@ const callGeminiImage = async (
 // Public API
 // ---------------------------------------------------------------------------
 
-/** Step 1: Fill hair in drawn/marked areas */
-export const step1FillHair = async (
+/** Simulate transplant: fill hair from drawn hairline + harmonize, single call */
+export const simulateAngle = async (
   compositeDataUrl: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  // High quality (0.95) to preserve green markings visibility
+  // High quality (0.95) to preserve red line visibility
   const compressed = await compressImage(compositeDataUrl, 1536, 0.95);
-  // High temperature (0.8) for aggressive edits — forces model to respect green markings
-  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`, 0.8);
+  return await callGeminiImage(compressed, PROMPTS[angle], `simulate-${angle}`, 0.8);
 };
 
-/** Step 2: Harmonize — blend new hair seamlessly with existing */
-export const step2Harmonize = async (
-  filledImageDataUrl: string,
-  angle: SimulationAngle
-): Promise<string> => {
-  const compressed = await compressImage(filledImageDataUrl);
-  return await callGeminiImage(compressed, STEP2_PROMPTS[angle], `step2-harmonize-${angle}`, 0.4);
-};
-
-/** Run both steps sequentially for all provided angles */
-export const runFullPipeline = async (
+/** Run simulation for all provided angles sequentially */
+export const runSimulation = async (
   composites: Record<SimulationAngle, string | null>,
-  onStep1Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void,
-  onStep2Result: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
+  onResult: (angle: SimulationAngle, result: { image?: string; error?: string }) => void
 ): Promise<void> => {
   const angles: SimulationAngle[] = ['frontal', 'top'];
-  const step1Results: Partial<Record<SimulationAngle, string>> = {};
 
-  // Step 1: fill hair for each angle
   for (const angle of angles) {
     const composite = composites[angle];
     if (!composite) continue;
     try {
-      const image = await step1FillHair(composite, angle);
-      step1Results[angle] = image;
-      onStep1Result(angle, { image });
+      const image = await simulateAngle(composite, angle);
+      onResult(angle, { image });
     } catch (err: any) {
-      onStep1Result(angle, { error: err?.message || 'Erro no preenchimento' });
-    }
-  }
-
-  // Step 2: harmonize successful step 1 results
-  for (const angle of angles) {
-    const filled = step1Results[angle];
-    if (!filled) continue;
-    try {
-      const image = await step2Harmonize(filled, angle);
-      onStep2Result(angle, { image });
-    } catch (err: any) {
-      onStep2Result(angle, { error: err?.message || 'Erro na harmonizacao' });
+      console.error(`[${angle}] Erro:`, err);
+      onResult(angle, { error: err?.message || 'Erro desconhecido' });
     }
   }
 };

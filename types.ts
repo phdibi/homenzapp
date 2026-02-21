@@ -18,15 +18,12 @@ export type PipelineStep =
   | 'processing'
   | 'done';
 
-export interface AngleStepResult {
+export interface AngleResult {
   angle: SimulationAngle;
   label: string;
-  step1Image: string | null;
-  step1Status: 'pending' | 'loading' | 'success' | 'error';
-  step1Error?: string;
-  step2Image: string | null;
-  step2Status: 'pending' | 'loading' | 'success' | 'error';
-  step2Error?: string;
+  image: string | null;
+  status: 'pending' | 'loading' | 'success' | 'error';
+  errorMessage?: string;
 }
 
 // --- DrawingCanvas props ---

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import DrawingCanvas from './DrawingCanvas';
-import { step1FillHair, step2Harmonize } from '../services/geminiService';
+import { simulateAngle } from '../services/geminiService';
 import type {
   SimulationAngle,
   AngleImageMap,
   AngleDrawingMap,
-  AngleStepResult,
+  AngleResult,
   PipelineStep,
 } from '../types';
 
@@ -33,14 +33,12 @@ const EMPTY_DRAWINGS: AngleDrawingMap = {
   top: { drawingDataUrl: null, compositeDataUrl: null },
 };
 
-const makeInitialResults = (): AngleStepResult[] =>
+const makeInitialResults = (): AngleResult[] =>
   ANGLES.map((angle) => ({
     angle,
     label: ANGLE_CONFIG[angle].label,
-    step1Image: null,
-    step1Status: 'pending',
-    step2Image: null,
-    step2Status: 'pending',
+    image: null,
+    status: 'pending',
   }));
 
 // ---------------------------------------------------------------------------
@@ -52,7 +50,7 @@ const HairRestore: React.FC = () => {
   const [angleImages, setAngleImages] = useState<AngleImageMap>(EMPTY_IMAGES);
   const [drawings, setDrawings] = useState<AngleDrawingMap>(EMPTY_DRAWINGS);
   const [activeDrawingAngle, setActiveDrawingAngle] = useState<SimulationAngle>('frontal');
-  const [results, setResults] = useState<AngleStepResult[]>(makeInitialResults());
+  const [results, setResults] = useState<AngleResult[]>(makeInitialResults());
 
   const uploadedCount = ANGLES.filter((a) => angleImages[a] !== null).length;
   const drawnCount = ANGLES.filter((a) => drawings[a].compositeDataUrl !== null).length;
@@ -95,32 +93,27 @@ const HairRestore: React.FC = () => {
     }));
   };
 
-  // --- Run full pipeline (step1 + step2 automatically) ---
+  // --- Run simulation (single prompt per angle) ---
 
   const runPipeline = async () => {
     setCurrentStep('processing');
-
-    // Initialize all results to loading/pending
     const activeAngles = ANGLES.filter((a) => drawings[a].compositeDataUrl !== null);
+
     setResults(
       makeInitialResults().map((r) => ({
         ...r,
-        step1Status: activeAngles.includes(r.angle) ? 'loading' as const : 'pending' as const,
+        status: activeAngles.includes(r.angle) ? 'loading' as const : 'pending' as const,
       }))
     );
-
-    // Step 1: fill hair for each angle
-    const step1Results: Partial<Record<SimulationAngle, string>> = {};
 
     for (const angle of activeAngles) {
       const composite = drawings[angle].compositeDataUrl!;
       try {
-        const image = await step1FillHair(composite, angle);
-        step1Results[angle] = image;
+        const image = await simulateAngle(composite, angle);
         setResults((prev) =>
           prev.map((r) =>
             r.angle === angle
-              ? { ...r, step1Image: image, step1Status: 'success' as const, step2Status: 'loading' as const }
+              ? { ...r, image, status: 'success' as const }
               : r
           )
         );
@@ -128,31 +121,7 @@ const HairRestore: React.FC = () => {
         setResults((prev) =>
           prev.map((r) =>
             r.angle === angle
-              ? { ...r, step1Status: 'error' as const, step1Error: err?.message }
-              : r
-          )
-        );
-      }
-    }
-
-    // Step 2: harmonize successful step 1 results
-    for (const angle of activeAngles) {
-      const filled = step1Results[angle];
-      if (!filled) continue;
-      try {
-        const image = await step2Harmonize(filled, angle);
-        setResults((prev) =>
-          prev.map((r) =>
-            r.angle === angle
-              ? { ...r, step2Image: image, step2Status: 'success' as const }
-              : r
-          )
-        );
-      } catch (err: any) {
-        setResults((prev) =>
-          prev.map((r) =>
-            r.angle === angle
-              ? { ...r, step2Status: 'error' as const, step2Error: err?.message }
+              ? { ...r, status: 'error' as const, errorMessage: err?.message }
               : r
           )
         );
@@ -316,10 +285,10 @@ const HairRestore: React.FC = () => {
             <div className="space-y-5 animate-fade-in">
               <div className="text-center space-y-1">
                 <p className="text-sm font-bold text-[#1D4998]">
-                  Marque com o dedo ou mouse as areas onde deseja cabelo
+                  Desenhe a linha da hairline desejada
                 </p>
                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">
-                  Pinte de verde as regioes de calvicie que devem ser preenchidas
+                  Trace uma linha vermelha onde a nova hairline deve ficar — o cabelo sera preenchido a partir dela
                 </p>
               </div>
 
@@ -407,34 +376,12 @@ const HairRestore: React.FC = () => {
                 <p className="text-sm font-bold text-[#1D4998]">
                   {currentStep === 'processing' ? 'Simulando transplante capilar...' : 'Simulacao concluida!'}
                 </p>
-                {currentStep === 'processing' && (
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    Etapa 1: preenchimento — Etapa 2: harmonizacao
-                  </p>
-                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {results.map((r) => {
                   const original = angleImages[r.angle];
                   if (!original) return null;
-
-                  // Show the best available result (step2 > step1 > loading)
-                  const finalImage = r.step2Image || r.step1Image;
-                  const isStep1Loading = r.step1Status === 'loading';
-                  const isStep2Loading = r.step2Status === 'loading';
-                  const isLoading = isStep1Loading || isStep2Loading;
-                  const hasError = r.step1Status === 'error' || r.step2Status === 'error';
-                  const errorMsg = r.step1Error || r.step2Error;
-                  const statusLabel = isStep1Loading
-                    ? 'Preenchendo...'
-                    : isStep2Loading
-                    ? 'Harmonizando...'
-                    : r.step2Status === 'success'
-                    ? 'Concluido'
-                    : r.step1Status === 'success'
-                    ? 'Preenchido'
-                    : '';
 
                   return (
                     <div key={r.angle} className="space-y-2">
@@ -450,49 +397,39 @@ const HairRestore: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* After (best result so far) */}
+                        {/* After (result) */}
                         <div className="relative rounded-xl overflow-hidden aspect-square border-2 border-[#57BEB7]/20 bg-gray-50">
-                          {isLoading && !finalImage && (
+                          {r.status === 'loading' && (
                             <div className="flex flex-col items-center justify-center h-full space-y-2">
                               <div className="w-10 h-10 border-4 border-[#57BEB7]/20 border-t-[#57BEB7] rounded-full animate-spin" />
                               <p className="text-[#1D4998] font-black text-[10px] uppercase tracking-widest animate-pulse">
-                                {statusLabel}
+                                Gerando...
                               </p>
                             </div>
                           )}
 
-                          {finalImage && (
+                          {r.status === 'success' && r.image && (
                             <>
-                              <img
-                                src={finalImage}
-                                alt="Resultado"
-                                className={`w-full h-full object-cover animate-fade-in ${isStep2Loading ? 'opacity-70' : ''}`}
-                              />
-                              {isStep2Loading && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                                  <div className="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                                  <p className="text-white font-black text-[9px] uppercase mt-1">Harmonizando...</p>
-                                </div>
-                              )}
+                              <img src={r.image} alt="Resultado" className="w-full h-full object-cover animate-fade-in" />
                               <div className="absolute bottom-1 left-1 bg-[#57BEB7]/80 text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                {r.step2Status === 'success' ? 'Resultado Final' : 'Preenchido'}
+                                Depois
                               </div>
                             </>
                           )}
 
-                          {hasError && !finalImage && (
+                          {r.status === 'error' && (
                             <div className="flex flex-col items-center justify-center h-full space-y-2 p-3">
                               <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <p className="text-red-500 font-bold text-[9px] text-center">Erro</p>
-                              {errorMsg && (
-                                <p className="text-gray-400 text-[8px] text-center">{errorMsg}</p>
+                              {r.errorMessage && (
+                                <p className="text-gray-400 text-[8px] text-center">{r.errorMessage}</p>
                               )}
                             </div>
                           )}
 
-                          {r.step1Status === 'pending' && (
+                          {r.status === 'pending' && (
                             <div className="flex items-center justify-center h-full">
                               <p className="text-gray-300 text-[10px] font-bold uppercase">Aguardando</p>
                             </div>
@@ -501,9 +438,9 @@ const HairRestore: React.FC = () => {
                       </div>
 
                       {/* Download */}
-                      {r.step2Status === 'success' && r.step2Image && (
+                      {r.status === 'success' && r.image && (
                         <a
-                          href={r.step2Image}
+                          href={r.image}
                           download={`homenz-simulacao-${r.angle}.png`}
                           className="block py-2 bg-[#1D4998] text-white text-center font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-[#153a7a] transition-all shadow-md"
                         >

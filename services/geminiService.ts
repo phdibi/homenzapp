@@ -118,59 +118,34 @@ export const HAIRSTYLE_OPTIONS: HairstyleOption[] = [
 // Step 1 prompts — Hair Fill (green markings → hair)
 // ---------------------------------------------------------------------------
 
-const STEP1_PREAMBLE = `You are a hair transplant surgeon's digital assistant.
-The patient's photo has been annotated by the surgeon with BRIGHT GREEN semi-transparent markings.
-These green markings indicate EXACTLY where new hair follicles must be transplanted.
-
-YOUR TASK: Generate the post-transplant result photo by adding dense, natural hair IN AND ONLY IN the areas marked with green color.
-
-CRITICAL RULES FOR GREEN MARKINGS:
-- Every area with green marking MUST have dense new hair in the output
-- Areas WITHOUT green marking must remain COMPLETELY UNCHANGED
-- The green markings themselves must NOT appear in the output — replace them entirely with natural-looking hair
-- The green color is a surgical annotation tool, NOT part of the final image
-
-HAIR QUALITY REQUIREMENTS:
-- Match the patient's existing hair color, texture, curl pattern, and growth direction EXACTLY
-- Create natural follicular unit density (40-60 FU/cm2) in marked areas
-- Edges of new hair zones must blend seamlessly with existing hair — no sharp lines
-- Add natural baby hairs at the hairline edge for realism
-
-PRESERVATION RULES:
-- Face, skin tone, ears, eyebrows, beard, clothing, background: IDENTICAL to input
-- Lighting, color grading, image composition: IDENTICAL to input
-- Existing hair outside marked zones: do NOT change density, color, or style
-- Output: single photorealistic photograph, no text, no labels, no side-by-side`;
-
 const STEP1_PROMPTS: Record<SimulationAngle, string> = {
-  frontal: `${STEP1_PREAMBLE}
+  frontal: `Edit this photo. The photo has BRIGHT GREEN painted areas on it. Those green areas are painted by a doctor to mark exactly where hair must grow.
 
-This is a FRONTAL photo with green surgical markings.
-The green areas indicate where the surgeon plans to transplant hair.
-Look carefully at where the green color appears — those are your ONLY target zones.
+DO THIS:
+1. Look at the image — find every green-colored region
+2. REMOVE the green paint completely
+3. REPLACE the green areas with dense, realistic hair — as if hair naturally grew there
+4. The hair you add must match the person's existing hair color, texture, and direction
+5. Do NOT change anything outside the green areas — face, skin, ears, existing hair, background stay identical
+6. Do NOT add hair anywhere that is NOT painted green
 
-For each green-marked area:
-- HAIRLINE region (if marked): create a natural, lower hairline with the density of healthy hair
-- TEMPLE CORNERS (if marked): fill the M-shape recession triangles with dense hair
-- CROWN/TOP (if marked): cover any visible scalp with dense hair growth
+The green paint is the ONLY guide. Hair goes ONLY where green is. Everywhere else stays untouched.
 
-Remove ALL green color from the output and replace it with photorealistic hair.
-Output a single photorealistic photograph.`,
+Output one photorealistic photo. No text. No labels. No split view.`,
 
-  top: `${STEP1_PREAMBLE}
+  top: `Edit this photo. The photo has BRIGHT GREEN painted areas on the scalp. Those green areas are painted by a doctor to mark exactly where hair must grow.
 
-This is a TOP-DOWN scalp photo with green surgical markings.
-The green areas indicate where the surgeon plans to transplant hair.
-Look carefully at where the green color appears — those are your ONLY target zones.
+DO THIS:
+1. Look at the image — find every green-colored region on the scalp
+2. REMOVE the green paint completely
+3. REPLACE the green areas with dense, realistic hair growing in natural directions from the crown whorl
+4. The hair you add must match the person's existing hair color and texture
+5. Do NOT change anything outside the green areas — existing hair, ears, neck, background stay identical
+6. Do NOT add hair anywhere that is NOT painted green
 
-For each green-marked area:
-- CROWN (if marked): fill with dense hair following the natural whorl growth pattern
-- MID-SCALP (if marked): add dense coverage radiating outward from the crown
-- FRONTAL ZONE (if marked): add thick forward-growing coverage
+The green paint is the ONLY guide. Hair goes ONLY where green is. Everywhere else stays untouched.
 
-Remove ALL green color from the output and replace it with photorealistic hair.
-Maintain natural hair growth direction (radiating from whorl).
-Output a single photorealistic photograph.`,
+Output one photorealistic photo. No text. No labels. No split view.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -207,9 +182,10 @@ Output a single photorealistic photograph. No text, no labels.`;
 const callGeminiImage = async (
   imageDataUrl: string,
   prompt: string,
-  label: string
+  label: string,
+  temperature = 0.4
 ): Promise<string> => {
-  console.log(`[Gemini] Processing ${label}...`);
+  console.log(`[Gemini] Processing ${label} (temp=${temperature})...`);
   const start = Date.now();
 
   const parsed = parseDataUrl(imageDataUrl);
@@ -227,7 +203,7 @@ const callGeminiImage = async (
     ],
     config: {
       responseModalities: ["TEXT", "IMAGE"],
-      temperature: 0.4,
+      temperature,
     },
   });
 
@@ -264,8 +240,11 @@ export const step1FillHair = async (
   compositeDataUrl: string,
   angle: SimulationAngle
 ): Promise<string> => {
-  const compressed = await compressImage(compositeDataUrl);
-  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`);
+  // Compress but with HIGH quality (0.95) to preserve green markings visibility
+  // The composite comes as PNG from DrawingCanvas — we resize but keep colors sharp
+  const compressed = await compressImage(compositeDataUrl, 1536, 0.95);
+  // Higher temperature (0.6) for more aggressive edits on marked areas
+  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`, 0.6);
 };
 
 /** Step 2: Apply hairstyle to a filled result */

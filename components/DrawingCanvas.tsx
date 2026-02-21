@@ -5,8 +5,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   photoDataUrl,
   onDrawingComplete,
   width: displayWidth = 500,
-  brushColor = 'rgba(0, 255, 0, 0.45)',
-  initialBrushSize = 25,
+  brushColor = 'rgba(0, 255, 0, 0.7)',
+  initialBrushSize = 30,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -141,7 +141,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const ctx = offscreen.getContext('2d')!;
     ctx.drawImage(photo, 0, 0, photo.naturalWidth, photo.naturalHeight);
     ctx.drawImage(canvas, 0, 0, photo.naturalWidth, photo.naturalHeight);
-    const compositeDataUrl = offscreen.toDataURL('image/jpeg', 0.90);
+    // PNG preserves the green markings without JPEG color degradation
+    const compositeDataUrl = offscreen.toDataURL('image/png');
 
     onDrawingComplete(drawingDataUrl, compositeDataUrl);
   };

@@ -190,8 +190,8 @@ export const step1FillHair = async (
 ): Promise<string> => {
   // High quality (0.95) to preserve green markings visibility
   const compressed = await compressImage(compositeDataUrl, 1536, 0.95);
-  // Higher temperature (0.6) for more aggressive edits on marked areas
-  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`, 0.6);
+  // High temperature (0.8) for aggressive edits — forces model to respect green markings
+  return await callGeminiImage(compressed, STEP1_PROMPTS[angle], `step1-${angle}`, 0.8);
 };
 
 /** Step 2: Harmonize — blend new hair seamlessly with existing */

@@ -5,7 +5,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   photoDataUrl,
   onDrawingComplete,
   width: displayWidth = 500,
-  brushColor = 'rgba(0, 255, 0, 0.7)',
+  brushColor = 'rgba(0, 255, 0, 0.9)',
   initialBrushSize = 30,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -12,12 +12,11 @@
 import { fal } from "@fal-ai/client";
 import type { SimulationAngle } from "../types";
 
-const FAL_KEY = process.env.FAL_KEY || process.env.NEXT_PUBLIC_FAL_KEY || "";
-if (!FAL_KEY) {
-  console.warn("[SimulationService] No FAL_KEY found — API calls will fail");
-} else {
-  fal.config({ credentials: FAL_KEY });
-}
+// For frontend usage, Fal expects all requests to go through a server proxy
+// to keep the API key hidden. The server proxy is implemented at /api/fal/proxy
+fal.config({
+  proxyUrl: "/api/fal/proxy",
+});
 
 // ---------------------------------------------------------------------------
 // Image compression
